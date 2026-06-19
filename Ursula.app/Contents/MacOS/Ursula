@@ -1,0 +1,5 @@
+#!/bin/bash
+# Ursula launcher — runs the dev build via code.sh (sets Node 24.15.0 + the dev env).
+export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:$PATH"
+cd "$HOME/MyApps/ursula-ide" || { osascript -e 'display notification "Repo not found at ~/MyApps/ursula-ide" with title "Ursula"'; exit 1; }
+exec ./scripts/code.sh

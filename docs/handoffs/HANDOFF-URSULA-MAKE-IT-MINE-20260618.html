@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handoff · URSULA-MAKE-IT-MINE</title>
+<!-- Single-file session handoff. Dual-purpose: visual dashboard for Drey (VARK) + complete resume context for the next Claude session. Opens offline; fonts degrade to system. No emoji (Drey's rule). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0B0D; --panel:#141417; --panel2:#1B1B1F; --line:#2A2A30;
+    --bone:#F4F1EC; --mute:#9A958C; --gold:#C2A878; --gold-dim:#7d6e4f;
+    --done:#5ec98b; --now:#C2A878; --next:#6aa6e8;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:'Big Shoulders Display','Arial Narrow',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--bone);font-family:var(--mono);
+    line-height:1.55;font-size:14px;-webkit-font-smoothing:antialiased;
+    padding:32px 20px 80px;max-width:980px;margin:0 auto;
+    animation:fade .5s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+  a{color:var(--gold)}
+  .goldline{height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    border-radius:3px;margin:0 0 22px}
+  h1{font-family:var(--disp);font-weight:800;font-size:42px;line-height:1;
+    letter-spacing:.5px;margin:0 0 6px;text-transform:uppercase}
+  h1 .sub{color:var(--gold)}
+  .meta{color:var(--mute);font-size:12.5px;margin-bottom:4px}
+  .meta b{color:var(--bone);font-weight:500}
+  .badge{display:inline-block;font-family:var(--disp);font-weight:700;font-size:13px;
+    letter-spacing:1px;text-transform:uppercase;padding:3px 12px;border-radius:20px;
+    border:1px solid var(--gold-dim);color:var(--gold);background:#1a160f}
+  .badge.blocked{color:#e8896a;border-color:#7d4f3f;background:#1f1310}
+  .badge.done{color:var(--done);border-color:#3f7d57;background:#10190f}
+
+  /* ---- the VARK diagram: 3-stage pipeline ---- */
+  .legend{color:var(--mute);font-size:11.5px;margin:26px 0 8px;text-transform:uppercase;letter-spacing:1.5px}
+  .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;gap:0;margin-bottom:8px}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;
+    transition:transform .15s,border-color .15s}
+  .stage:hover{transform:translateY(-3px)}
+  .stage .label{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:1px;
+    text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .stage .count{margin-left:auto;font-size:12px;color:var(--mute)}
+  .stage .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .stage.done{border-top:3px solid var(--done)} .stage.done .label{color:var(--done)} .stage.done .dot{background:var(--done)}
+  .stage.now{border-top:3px solid var(--now)} .stage.now .label{color:var(--now)} .stage.now .dot{background:var(--now)}
+  .stage.next{border-top:3px solid var(--next)} .stage.next .label{color:var(--next)} .stage.next .dot{background:var(--next)}
+  .chips{display:flex;flex-direction:column;gap:6px}
+  .chip{font-size:12px;color:var(--bone);background:var(--panel2);border:1px solid var(--line);
+    border-radius:8px;padding:6px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip.more{color:var(--mute);border-style:dashed}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:24px;padding:0 6px}
+
+  /* ---- detail sections ---- */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .card.full{grid-column:1 / -1}
+  .card h2{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:1px;
+    text-transform:uppercase;margin:0 0 10px;color:var(--gold)}
+  ul{margin:0;padding-left:18px} li{margin:4px 0}
+  .tldr{font-size:15px;line-height:1.6;color:var(--bone);background:var(--panel);
+    border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:14px 16px;margin:22px 0}
+  .dec{margin:6px 0} .dec b{color:var(--bone)} .dec .why{color:var(--mute)}
+  .files code{color:var(--gold);font-size:12.5px} .files .c{color:var(--mute)}
+  .ol{counter-reset:n;list-style:none;padding-left:0}
+  .ol li{counter-increment:n;padding-left:30px;position:relative;margin:7px 0}
+  .ol li::before{content:counter(n);position:absolute;left:0;top:0;width:20px;height:20px;
+    background:var(--next);color:#0B0B0D;border-radius:50%;font-weight:700;font-size:11px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--disp)}
+
+  /* ---- resume prompt (for the next agent) ---- */
+  .resume{margin-top:26px;background:#0f0f12;border:1px solid var(--gold-dim);border-radius:14px;overflow:hidden}
+  .resume .bar{display:flex;align-items:center;gap:10px;padding:11px 16px;background:#171510;border-bottom:1px solid var(--line)}
+  .resume .bar .t{font-family:var(--disp);font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold);font-size:14px}
+  .resume .bar .hint{color:var(--mute);font-size:11px;margin-left:auto}
+  .copy{background:var(--gold);color:#0B0B0D;border:0;border-radius:7px;padding:5px 12px;
+    font-family:var(--disp);font-weight:700;letter-spacing:.5px;cursor:pointer;font-size:12px}
+  .copy:active{transform:scale(.96)}
+  pre{margin:0;padding:16px;white-space:pre-wrap;word-break:break-word;color:var(--bone);font-size:13px;line-height:1.6}
+  .foot{color:var(--mute);font-size:11px;text-align:center;margin-top:30px}
+  @media(max-width:760px){
+    h1{font-size:32px}
+    .flow{grid-template-columns:1fr;gap:10px}
+    .arrow{transform:rotate(90deg);padding:2px 0}
+    .grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+  <h1>Handoff · <span class="sub">URSULA-MAKE-IT-MINE</span></h1>
+  <div class="meta"><b>Project Ursula (IDE) — Code-OSS fork</b> · <span>~/MyApps/ursula-ide</span></div>
+  <div class="meta">2026-06-18 &nbsp;·&nbsp; <span class="badge done">done — bootable fork built + booted</span></div>
+  <div class="goldline"></div>
+
+  <div class="tldr">Ursula = a Code-OSS v1.126.0 fork. It BUILDS and BOOTS (verified): Bone+Gold theme rendering, Open VSX wired (Kilo Code installable), unsigned dev. 3 commits on the ursula branch. Next = make the identity truly Ursula (app icon, UI font, product icons, terminal, name strings). File-exact steps below. Pick up after reset with the resume prompt.</div>
+
+  <div class="legend">&rsaquo; The shape of it — read left to right</div>
+  <div class="flow">
+    <div class="stage done">
+      <div class="label"><span class="dot"></span>Done <span class="count">9</span></div>
+      <div class="chips"><div class="chip">Parked stranded Tauri Phase-2 WIP on branch phase-2-wip-parked (commit ca95f0e) — nothing lost</div><div class="chip">Cloned Code-OSS v1.126.0 (shallow) at ~/MyApps/ursula-ide; fork on 'ursula' branch, 'main' = clean upstream mirror</div><div class="chip">Rebranded product.json -&gt; Ursula (nameShort/nameLong/applicationName/dataFolderName .ursula/sharedDataFolderName .ursula-shared/urlProtocol/darwinBundleIdentifier) — surgical 14+/7- diff, commit 5147772a</div><div class="chip more">+6 more</div></div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="stage now">
+      <div class="label"><span class="dot"></span>Now <span class="count">6</span></div>
+      <div class="chips"><div class="chip">FLAGSHIP FEATURE PLANNED (not yet built): a signature launch intro — hyperspace starfield warp + animated 'Hello {Name}, build something great' (frameless Electron splash). Top priority for next session. See the visual plan.</div><div class="chip">App BUILDS and BOOTS (proven this session via screenshots). Not currently running — relaunch with: export PATH=~/.nvm/versions/node/v24.15.0/bin:$PATH &amp;&amp; cd ~/MyApps/ursula-ide &amp;&amp; ./scripts/code.sh</div><div class="chip">3 commits on 'ursula' branch: 5147772a (rebrand+OpenVSX), 7289bce0 (Bone+Gold theme), 5e136068 (CHANGELOG+handoff). Tree clean except .orig backups. 'main' = clean upstream mirror for merges.</div><div class="chip more">+3 more</div></div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="stage next">
+      <div class="label"><span class="dot"></span>Next <span class="count">8</span></div>
+      <div class="chips"><div class="chip">P0 (FLAGSHIP) — Signature launch intro: frameless Electron splash (src/vs/code/electron-main/) loading resources/ursula-intro.html — a canvas hyperspace starfield (stars emit from center, streak outward, accelerate) + animated 'Hello {Name}, build something great' (typewriter/fade), ~2.5s, fades into the workbench. Doubles as the boot loading screen. Name from a new ursula.userName setting (first-run QuickInput, default OS username, stored in .ursula). The 'wow' first impression Drey asked for.</div><div class="chip">P0 — UI font (biggest 'mine' shift for medium effort): edit src/vs/workbench/browser/media/style.css lines 12-16, change -apple-system -&gt; 'Big Shoulders Display' for headings + JetBrains Mono for code. KEEP the CJK fallbacks (PingFang/Hiragino) or non-Latin text breaks. Bundle the font files (Google Fonts + JetBrains = license-OK).</div><div class="chip">P0 — Terminal quick win (near-free): set terminal.integrated.gpuAcceleration='on' + terminal.integrated.shellIntegration.enabled=true in the DEFAULT settings -&gt; instant Warp-ish feel + working command decorations out of the box. Then P1: style exit-dot gold(success)/red(fail) + port OSC 133 from ~/My Apps/ursula-terminal/src/shell-integration.</div><div class="chip more">+5 more</div></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><h2>What Was Done</h2><ul><li>Parked stranded Tauri Phase-2 WIP on branch phase-2-wip-parked (commit ca95f0e) — nothing lost</li><li>Cloned Code-OSS v1.126.0 (shallow) at ~/MyApps/ursula-ide; fork on 'ursula' branch, 'main' = clean upstream mirror</li><li>Rebranded product.json -&gt; Ursula (nameShort/nameLong/applicationName/dataFolderName .ursula/sharedDataFolderName .ursula-shared/urlProtocol/darwinBundleIdentifier) — surgical 14+/7- diff, commit 5147772a</li><li>Wired Open VSX marketplace (extensionsGallery -&gt; open-vsx.org); Kilo Code v7.3.49 confirmed present + verified via API</li><li>Authored Bone+Gold color theme (extensions/theme-defaults/themes/ursula-dark.json); registered + set as boot default; gutted the blue COLOR_THEME_DARK_INITIAL_COLORS override — commit 7289bce0</li><li>Built: Node 24.15.0, npm install real exit 0, 88 native .node binaries (node-pty + sqlite3 built clean)</li><li>BOOTED: ./scripts/code.sh launched Ursula Electron — Bone+Gold confirmed rendering via screenshot+vision (not the default blue), 7 Electron processes, clean boot log</li><li>Wrote CONTEXT.md, ARCHITECTURE-v2.md, ROADMAP-v2.md, CHANGELOG.md (commit 5e136068) + this handoff</li><li>Ran a make-it-mine mapping workflow — visual-identity dimension returned file-exact refs (folded into NEXT below); 4 of 5 map agents hit context thrash, so re-derive branding/workspace/terminal/bear-asset file locations with grep when you start those phases</li></ul></div>
+    <div class="card"><h2>Current State</h2><ul><li>FLAGSHIP FEATURE PLANNED (not yet built): a signature launch intro — hyperspace starfield warp + animated 'Hello {Name}, build something great' (frameless Electron splash). Top priority for next session. See the visual plan.</li><li>App BUILDS and BOOTS (proven this session via screenshots). Not currently running — relaunch with: export PATH=~/.nvm/versions/node/v24.15.0/bin:$PATH &amp;&amp; cd ~/MyApps/ursula-ide &amp;&amp; ./scripts/code.sh</li><li>3 commits on 'ursula' branch: 5147772a (rebrand+OpenVSX), 7289bce0 (Bone+Gold theme), 5e136068 (CHANGELOG+handoff). Tree clean except .orig backups. 'main' = clean upstream mirror for merges.</li><li>Title bar + Welcome screen still say 'VS Code' (branding strings NOT yet changed) — the main identity loose end</li><li>Terminal = stock VS Code (works); Warp-grade upgrade not started. App icon = stock VS Code. UI font = system default. Product icon theme = default.</li><li>extensionsApiProposals.ts is BUILD-GENERATED (preLaunch rewrites it from extension proposals) — already discarded this session; if it shows as modified after a build, discard again, never commit it</li></ul></div>
+    <div class="card full"><h2>What's Next <span style="font-size:11px;color:var(--mute);font-weight:400">(ordered — start at 1)</span></h2><ul class="ol"><li>P0 (FLAGSHIP) — Signature launch intro: frameless Electron splash (src/vs/code/electron-main/) loading resources/ursula-intro.html — a canvas hyperspace starfield (stars emit from center, streak outward, accelerate) + animated 'Hello {Name}, build something great' (typewriter/fade), ~2.5s, fades into the workbench. Doubles as the boot loading screen. Name from a new ursula.userName setting (first-run QuickInput, default OS username, stored in .ursula). The 'wow' first impression Drey asked for.</li><li>P0 — UI font (biggest 'mine' shift for medium effort): edit src/vs/workbench/browser/media/style.css lines 12-16, change -apple-system -&gt; 'Big Shoulders Display' for headings + JetBrains Mono for code. KEEP the CJK fallbacks (PingFang/Hiragino) or non-Latin text breaks. Bundle the font files (Google Fonts + JetBrains = license-OK).</li><li>P0 — Terminal quick win (near-free): set terminal.integrated.gpuAcceleration='on' + terminal.integrated.shellIntegration.enabled=true in the DEFAULT settings -&gt; instant Warp-ish feel + working command decorations out of the box. Then P1: style exit-dot gold(success)/red(fail) + port OSC 133 from ~/My Apps/ursula-terminal/src/shell-integration.</li><li>P0 — Bear Dock icon: build ursula.icns via 'iconutil -c icns ursula.iconset' (sizes 16/32/64/128/256/512/1024, @1x + @2x), overwrite resources/darwin/code.icns (or add ursula.icns + repoint build). FULL REBUILD required (Electron caches icons). Do NOT hand-edit the binary .icns. Source the bear mark: check ~/My Apps/ursula-terminal/mockup first, else draft via Pollinations (free), final via image-generation skill, Bone+Gold palette.</li><li>P0 — Own the name: sweep user-facing 'VS Code'/'Code - OSS' strings -&gt; 'Ursula' (grep src/ extensions/ *.nls.json). Key files: resources/darwin/code-oss-info.plistc (CFBundleName/CFBundleDisplayName = Dock+menu name), package.nls.json (%productName%), extensions/gettingStarted ('Welcome to VS Code'), About dialog. KEEP MIT copyright to Microsoft Corporation intact.</li><li>P1 — Product icon theme: ADD a NEW 'productIconThemes' array to product.json (it does NOT exist yet) + create extensions/ursula-product-icons/themes/theme.json. SCHEMA GOTCHA: only foreground/background/accent keys allowed (extras BREAK rendering) — fg #F4F1EC, bg #0B0B0D, accent #C2A878.</li><li>P1 — Port workspaces from ~/My Apps/ursula-terminal (hermes-vps/1bb/founders-social/personal): hermes-vps = SSH Remote workspace; others = local .code-workspace files. Use ssh-agent for keys, never hardcode.</li><li>P2 — Window chrome + splash: restyle title bar Bone (#0B0B0D). NOTE macOS constraint: red/yellow/green traffic-lights are SYSTEM-rendered — can only recolor via custom title bar (titleBarStyle:'customButtonsOnHover'/'hidden'); don't promise recolored traffic lights. Replace splash.png. Then settings-copy sweep.</li></ul></div>
+    <div class="card"><h2>Key Decisions</h2><div class="dec">• <b>Pivoted Ursula from a from-scratch Tauri terminal to a Code-OSS (VS Code) fork</b><br><span class="why">↳ VS Code extensions (Kilo Code) need the Extension Host + full Electron workbench — impossible on Tauri/Rust without reimplementing the host.</span></div><div class="dec">• <b>Marketplace = Open VSX, not Microsoft Marketplace</b><br><span class="why">↳ Microsoft Marketplace ToS forbids non-Microsoft clients; Open VSX is the legal equivalent, carries Kilo Code/Cline/Continue.</span></div><div class="dec">• <b>Project lives at ~/MyApps/ursula-ide (spaceless), NOT ~/My Apps/</b><br><span class="why">↳ Spaces in the path break node-gyp's make (unquoted paths -&gt; sqlite3/node-pty fail to compile).</span></div><div class="dec">• <b>Build with Node 24.15.0 exactly</b><br><span class="why">↳ VS Code's preinstall.ts enforces the .nvmrc pin; Node 24.11.1 is rejected (minor 11 &lt; 15).</span></div><div class="dec">• <b>Gutted COLOR_THEME_DARK_INITIAL_COLORS when setting Bone+Gold as default</b><br><span class="why">↳ It was a map of VS Code blue #0078D4 overrides that would overwrite the gold on first boot.</span></div><div class="dec">• <b>Kept the Tauri project (~/My Apps/ursula-terminal) preserved, not deleted</b><br><span class="why">↳ Portable-asset source: Bone+Gold tokens, xterm decoration-clipping fix, workspace configs, OSC 133 shell-integration.</span></div></div>
+    <div class="card"><h2>Gotchas</h2><ul><li>SPACELESS PATH REQUIRED: ~/MyApps/ursula-ide must NOT move back to ~/My Apps/ — spaces break node-gyp native builds. No env-flag fix; the generated Makefiles are the problem.</li><li>NODE 24.15.0 REQUIRED: VS Code preinstall.ts enforces .nvmrc exactly. nvm 'use' does NOT persist across Claude Code Bash calls — prepend ~/.nvm/versions/node/v24.15.0/bin to PATH explicitly.</li><li>Relaunch (post-reset): export PATH=~/.nvm/versions/node/v24.15.0/bin:$PATH &amp;&amp; cd ~/MyApps/ursula-ide &amp;&amp; ./scripts/code.sh  (first launch recompiles if out/ is stale — a few min).</li><li>extensionsApiProposals.ts is BUILD-GENERATED (preLaunch rewrites it) — if it shows modified after a build, git checkout -- to discard. Never commit it.</li><li>Product-icon theme schema: ONLY foreground/background/accent keys — any extra key BREAKS icon rendering.</li><li>macOS traffic-lights are system-rendered — cannot recolor without a custom title bar (titleBarStyle:'customButtonsOnHover'); don't over-promise recolored window buttons.</li><li>UNSIGNED/UNNOTARIZED: Gatekeeper warns if shared. Code-signing (Apple Dev $99/yr) is a later gate before any distribution.</li><li>MIT copyright: when sweeping 'VS Code'-&gt;'Ursula', do NOT strip 'Copyright (c) Microsoft Corporation' headers — license requirement.</li><li>4 of 5 make-it-mine map agents hit context thrash reading large VS Code files — re-derive exact file locations for branding/workspace/terminal/bear-asset with grep at the start of each phase (the visual-identity refs in NEXT are reliable).</li><li>Don't trust task 'exit 0' blindly — trailing echoes masked two real npm exit-1 failures this session. Verify the real exit line in logs.</li></ul></div>
+    <div class="card full files"><h2>Files Touched</h2><ul><li><code>~/MyApps/ursula-ide/product.json</code> <span class="c">— DONE rebrand+OpenVSX (commit 5147772a). NEXT: ADD a new 'productIconThemes' array here (P1).</span></li><li><code>~/MyApps/ursula-ide/extensions/theme-defaults/themes/ursula-dark.json</code> <span class="c">— DONE Bone+Gold theme. NEXT: add terminal.* exit-dot colors here (P1).</span></li><li><code>~/MyApps/ursula-ide/src/vs/workbench/browser/media/style.css (lines 12-16)</code> <span class="c">— NEXT P0: UI font -&gt; Big Shoulders Display + JetBrains Mono, keep CJK fallbacks.</span></li><li><code>~/MyApps/ursula-ide/resources/darwin/code.icns</code> <span class="c">— NEXT P0: replace with ursula.icns (build via iconutil -c icns), full rebuild.</span></li><li><code>~/MyApps/ursula-ide/resources/darwin/code-oss-info.plistc</code> <span class="c">— NEXT P0: CFBundleName/CFBundleDisplayName -&gt; Ursula (Dock + menu name).</span></li><li><code>~/MyApps/ursula-ide/package.nls.json + extensions/gettingStarted/</code> <span class="c">— NEXT P0: 'Welcome to VS Code' + product labels -&gt; Ursula (keep MIT copyright).</span></li><li><code>~/MyApps/ursula-ide/extensions/ursula-product-icons/themes/theme.json (NEW)</code> <span class="c">— NEXT P1: product-icon theme, ONLY fg/bg/accent keys.</span></li><li><code>~/MyApps/ursula-ide/{CONTEXT,ARCHITECTURE-v2,ROADMAP-v2,CHANGELOG}.md</code> <span class="c">— Read FIRST when resuming — full pivot rationale, fork surface, phased roadmap, gotchas.</span></li><li><code>~/My Apps/ursula-terminal</code> <span class="c">— Preserved Tauri project (read-only asset source). Phase-2 WIP safe on branch phase-2-wip-parked.</span></li></ul></div>
+  </div>
+
+  <div class="resume">
+    <div class="bar">
+      <span class="t">&rsaquo; Resume Prompt</span>
+      <span class="hint">paste into a fresh session — gives the next Claude everything</span>
+      <button class="copy" onclick="cp(this)">Copy</button>
+    </div>
+    <pre id="rp">Resume Project Ursula (IDE). It's a Code-OSS v1.126.0 fork at ~/MyApps/ursula-ide (fork on 'ursula' branch, main = upstream mirror). It BUILDS and BOOTS (verified): Bone+Gold theme, Open VSX wired (Kilo Code installable), unsigned dev. 3 commits: 5147772a rebrand+OpenVSX, 7289bce0 Bone+Gold theme, 5e136068 docs. Read ~/MyApps/ursula-ide/CONTEXT.md + ROADMAP-v2.md + CHANGELOG.md first, and the visual plan at ~/Desktop/PLAN-URSULA-MAKE-IT-MINE-20260618.html. Relaunch: `export PATH=~/.nvm/versions/node/v24.15.0/bin:$PATH &amp;&amp; cd ~/MyApps/ursula-ide &amp;&amp; ./scripts/code.sh` (path MUST stay spaceless; Node MUST be 24.15.0). NEXT = make it truly mine, in order: (P0 flagship) signature launch intro — Electron splash + canvas hyperspace starfield + animated 'Hello {Name}, build something great' (name from first-run prompt, stored in .ursula); (P0) UI font in src/vs/workbench/browser/media/style.css:12 -&gt; Big Shoulders+JetBrains Mono [keep CJK fallbacks]; enable terminal gpuAcceleration+shellIntegration in default settings; bear Dock icon via iconutil replacing resources/darwin/code.icns; sweep 'VS Code'-&gt;'Ursula' strings [keep MIT copyright]. (P1) new productIconThemes array in product.json [only fg/bg/accent keys]; port workspaces from ~/My Apps/ursula-terminal. (P2) window chrome + splash. The visual-identity file refs are reliable; re-derive branding/workspace/terminal/bear-asset exact paths with grep at the start of each phase (those map agents thrashed).</pre>
+  </div>
+
+  <div class="foot">Generated Jun 18, 2026, 9:17 AM · single-file handoff · /handoff</div>
+<script>
+  function cp(b){var t=document.getElementById('rp').innerText;
+    navigator.clipboard.writeText(t).then(function(){var o=b.innerText;b.innerText='Copied';setTimeout(function(){b.innerText=o},1400)})}
+</script>
+</body>
+</html>

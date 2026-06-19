@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Make Ursula Mine — Plan (2026-06-18)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0B0D; --panel:#141417; --panel2:#101013; --bone:#F4F1EC; --muted:#9A958C;
+    --gold:#C2A878; --gold2:#D8BE8E; --line:#1E1E22; --green:#7FB069; --red:#E06C75; --amber:#E5C07B; --blue:#8FA8C5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--bone);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.55;padding:0 0 80px}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 28px}
+  h1,h2,h3,.disp{font-family:"Big Shoulders Display",-apple-system,sans-serif;letter-spacing:.5px}
+  code,.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+  a{color:var(--gold2);text-decoration:none}
+  .eyebrow{color:var(--gold);font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+  h1{font-size:54px;margin:0 0 6px;line-height:1}
+  h1 .grad{background:linear-gradient(90deg,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .oneLiner{color:var(--muted);font-size:17px;max-width:760px;margin:10px 0 22px}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+  .pill{font-size:12px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--panel2)}
+  .pill.done{color:#0B0B0D;background:var(--green);border-color:var(--green);font-weight:600}
+  .pill.gold{color:#0B0B0D;background:var(--gold);border-color:var(--gold);font-weight:600}
+
+  /* flow diagram */
+  .flow{display:flex;align-items:stretch;gap:0;margin:26px 0 6px;flex-wrap:wrap}
+  .node{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--gold);padding:14px 14px 12px;border-radius:8px;position:relative}
+  .node .n{font-family:"Big Shoulders Display";font-size:13px;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
+  .node .t{font-weight:600;font-size:14px;margin-top:2px}
+  .node.done{border-left-color:var(--green)}
+  .node.done .n{color:var(--green)}
+  .node.next{border-left-color:var(--gold)}
+  .arr{display:flex;align-items:center;color:var(--muted);padding:0 6px;font-size:18px}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0 6px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 16px 14px}
+  .card h3{margin:0 0 8px;font-size:15px;letter-spacing:1px;text-transform:uppercase;color:var(--gold2)}
+  .card ul{margin:0;padding-left:18px;color:var(--bone)}
+  .card li{margin:5px 0;font-size:14px}
+  .card.warn{border-color:#3a2a14}
+  .card.warn h3{color:var(--amber)}
+
+  /* phases */
+  .phase{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 20px 18px;margin:18px 0;position:relative;overflow:hidden}
+  .phase::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold)}
+  .phase.p1::before{background:var(--blue)} .phase.p2::before{background:var(--muted)}
+  .phaseHead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .phaseId{font-family:"Big Shoulders Display";font-size:13px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:800}
+  .phaseGoal{font-weight:600;font-size:18px}
+  .phaseWhy{color:var(--muted);font-size:13.5px;margin:6px 0 12px}
+  .step{border-top:1px solid var(--line);padding:12px 0;display:grid;grid-template-columns:64px 1fr;gap:14px}
+  .step:first-of-type{border-top:0}
+  .effort{font-family:"JetBrains Mono";font-size:11px;font-weight:600;text-align:center;padding:3px 0;border-radius:5px;border:1px solid var(--line);color:var(--muted);align-self:start;margin-top:2px}
+  .effort.s{color:var(--green);border-color:#2a3a24}
+  .effort.m{color:var(--amber);border-color:#3a3219}
+  .effort.l{color:var(--red);border-color:#3a1e22}
+  .stepTitle{font-weight:600;font-size:15px}
+  .stepChange{color:var(--bone);font-size:13.5px;margin:4px 0 6px}
+  .ref{display:inline-block;font-family:"JetBrains Mono";font-size:11.5px;background:var(--bg);border:1px solid var(--line);color:var(--gold2);padding:3px 8px;border-radius:5px;word-break:break-all}
+  .mine{color:var(--muted);font-size:12.5px;font-style:italic}
+  .mine b{color:var(--gold);font-style:normal}
+
+  .resume{background:linear-gradient(180deg,#141417,#101013);border:1px solid var(--gold);border-radius:12px;padding:20px;margin-top:26px}
+  .resume h3{margin:0 0 6px;color:var(--gold);font-size:14px;letter-spacing:2px;text-transform:uppercase}
+  .resume pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px;font-size:12.5px;color:var(--bone);overflow:auto;white-space:pre-wrap;margin:8px 0}
+  .resume .cmd{color:var(--gold2)}
+  .resume p{color:var(--muted);font-size:13px;margin:6px 0}
+  .foot{color:var(--muted);font-size:12px;margin-top:24px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Project Ursula (IDE) — Code-OSS fork</div>
+  <h1>Make <span class="grad">Ursula</span> Mine</h1>
+  <div class="oneLiner">Ursula already builds, boots, wears Bone+Gold, and installs extensions from Open VSX. The fork foundation is DONE. This plan finishes the identity — Dock icon, UI font, product icons, terminal, and the last "VS Code" strings — so it looks and feels unmistakably Drey's. <b style="color:var(--gold)">New flagship:</b> a signature launch intro &mdash; a hyperspace starfield that resolves into an animated &ldquo;Hello {Name}, build something great.&rdquo;</div>
+
+  <div class="pills">
+    <span class="pill done">BUILDS + BOOTS</span>
+    <span class="pill done">Bone+Gold theme</span>
+    <span class="pill done">Open VSX (Kilo Code)</span>
+    <span class="pill gold">3 commits on ursula branch</span>
+    <span class="pill">unsigned dev</span>
+    <span class="pill gold">NEW: hyperdrive intro</span>
+  </div>
+
+  <!-- FLOW -->
+  <div class="flow">
+    <div class="node done"><div class="n">Done</div><div class="t">Fork foundation</div></div>
+    <div class="arr">&rarr;</div>
+    <div class="node next"><div class="n">P0</div><div class="t">Brand the chrome</div></div>
+    <div class="arr">&rarr;</div>
+    <div class="node"><div class="n">P1</div><div class="t">Deep personality</div></div>
+    <div class="arr">&rarr;</div>
+    <div class="node"><div class="n">P2</div><div class="t">Power &amp; polish</div></div>
+  </div>
+
+  <!-- QUICK WINS + BLIND SPOTS -->
+  <div class="grid">
+    <div class="card">
+      <h3>Quick wins (each &lt;30 min)</h3>
+      <ul>
+        <li>Flip terminal <code>gpuAcceleration</code> + <code>shellIntegration.enabled</code> ON in default settings</li>
+        <li>UI font swap in <code>style.css:12</code> (Big Shoulders + JetBrains Mono)</li>
+        <li>Dock name + menu name via <code>CFBundleName</code> in the info.plistc</li>
+        <li>Rebuild the icon once a bear PNG exists</li>
+      </ul>
+    </div>
+    <div class="card warn">
+      <h3>Blind spots</h3>
+      <ul>
+        <li>MIT copyright headers must stay ("Microsoft Corporation") — only change product-name strings</li>
+        <li>Product-icon theme schema accepts ONLY fg/bg/accent keys — extras break rendering</li>
+        <li>macOS traffic-lights are system-rendered — can't recolor without a custom title bar</li>
+        <li>SSH keys for hermes-vps workspace: ssh-agent only, never hardcode</li>
+        <li>Unsigned build trips Gatekeeper if shared — signing is a later gate</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SIGNATURE INTRO (the wow) -->
+  <div class="phase" style="border-color:var(--gold);background:linear-gradient(180deg,#16140d,#141417)">
+    <div class="phaseHead"><span class="phaseId" style="color:var(--gold2)">Signature &mdash; Launch intro</span><span class="phaseGoal">The hyperdrive welcome</span></div>
+    <div class="phaseWhy">The first impression. On open: a full-screen starfield warp (&ldquo;hyperdrive into space&rdquo;) that resolves into an animated <b>&ldquo;Hello {Name}, build something great.&rdquo;</b> Then fades into the workbench. Pure Bone+Gold, no emoji, ~2.5s, 60fps &mdash; and it doubles as the loading screen while the workbench boots.</div>
+
+    <div style="display:grid;grid-template-columns:170px 1fr;gap:16px;align-items:center;margin:6px 0 16px">
+      <div style="position:relative;height:132px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#23202a,#0B0B0D 72%)">
+        <div style="position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 50% 50%, rgba(194,168,120,0.12) 0deg, transparent 5deg 24deg)"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+          <div style="font-family:'Big Shoulders Display';font-size:21px;color:var(--bone);letter-spacing:1px">Hello <span style="color:var(--gold)">Drey</span></div>
+          <div style="font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">build something great</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--muted)">
+        <b style="color:var(--bone)">The effect:</b> stars emit from center, streak outward, and accelerate (hyperspace) while the greeting types in. Canvas <code>requestAnimationFrame</code> &mdash; zero dependencies, GPU-friendly. Plays over the workbench boot so the &ldquo;wow&rdquo; covers real load time, not wasted seconds.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="effort l">L</div>
+      <div>
+        <div class="stepTitle">Build the launch intro: starfield warp + animated greeting</div>
+        <div class="stepChange">Frameless Electron splash BrowserWindow on launch that loads <code>resources/ursula-intro.html</code> &mdash; a canvas hyperspace starfield (stars emit from center, streak outward, accelerate) + a typewriter/fade reveal of &ldquo;Hello {Name}, build something great.&rdquo; Plays ~2.5s, fades, hands off to the workbench. Wire it into the Electron main startup flow so it shows before the workbench window.</div>
+        <span class="ref">src/vs/code/electron-main/ (splash window) &nbsp;+&nbsp; resources/ursula-intro.html (canvas + CSS, Bone+Gold)</span>
+        <div class="mine"><b>Why it's mine:</b> the moment anyone opens Ursula it feels like a flagship product &mdash; not a stock editor.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="effort s">S</div>
+      <div>
+        <div class="stepTitle">The name: first-run prompt, stored in .ursula</div>
+        <div class="stepChange">New setting <code>ursula.userName</code>; on first run a QuickInput asks for it (default = OS username). Stored in the isolated <code>.ursula</code> profile and read by the intro. Persists across launches; editable later in Settings.</div>
+        <span class="ref">new setting ursula.userName &nbsp;+&nbsp; first-run QuickInput &nbsp;+&nbsp; .ursula profile</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- P0 -->
+  <div class="phase p0">
+    <div class="phaseHead"><span class="phaseId">P0 — Brand the chrome</span><span class="phaseGoal">Biggest visible "mine" shift, least effort</span></div>
+    <div class="phaseWhy">The foundation boots. Now make the surfaces Drey touches first — Dock, fonts, terminal, name — read as Ursula, not VS Code.</div>
+
+    <div class="step">
+      <div class="effort m">M</div>
+      <div>
+        <div class="stepTitle">Switch the UI font to Big Shoulders Display + JetBrains Mono</div>
+        <div class="stepChange">Edit the workbench base font rule, swap <code>-apple-system</code> for the display stack. Bundle the font files (Google Fonts + JetBrains = license-OK). Keep CJK fallbacks or non-Latin text breaks.</div>
+        <span class="ref">src/vs/workbench/browser/media/style.css &nbsp;lines 12&ndash;16</span>
+        <div class="mine"><b>Why it's mine:</b> the single biggest "this is a different app" signal — custom typography on every screen.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="effort s">S</div>
+      <div>
+        <div class="stepTitle">Enable terminal GPU + shell integration by default</div>
+        <div class="stepChange">Set <code>terminal.integrated.gpuAcceleration: "on"</code> and <code>shellIntegration.enabled: true</code> in the default settings — instant Warp-ish feel + working command decorations out of the box, no code.</div>
+        <span class="ref">default settings JSON &nbsp;(terminal.integrated.*)</span>
+        <div class="mine"><b>Why it's mine:</b> Drey daily-drives Warp; this makes the terminal fast and block-aware on first launch.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="effort l">L</div>
+      <div>
+        <div class="stepTitle">Replace the macOS Dock icon with a Bone+Gold bear</div>
+        <div class="stepChange">Build a proper <code>.icns</code> from an iconset (16&ndash;1024, @1x + @2x) and overwrite the stock icon. <b>Full rebuild required</b> (Electron caches icons). Do NOT hand-edit the binary. Source the bear: check the Tauri project's mockup first, else draft via Pollinations (free), final via the image-generation skill.</div>
+        <span class="ref">resources/darwin/code.icns &nbsp;&rarr;&nbsp; build via <code>iconutil -c icns ursula.iconset</code></span>
+        <div class="mine"><b>Why it's mine:</b> the Dock icon is the first thing Drey sees before launch — it's the brand mark.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="effort m">M</div>
+      <div>
+        <div class="stepTitle">Sweep user-facing "VS Code" / "Code - OSS" &rarr; "Ursula"</div>
+        <div class="stepChange">Grep <code>src/</code>, <code>extensions/</code>, <code>*.nls.json</code>. Key targets: the macOS bundle display name, the product name label, "Welcome to VS Code", the About dialog. <b>HARD RULE:</b> keep every "Copyright (c) Microsoft Corporation" header intact.</div>
+        <span class="ref">resources/darwin/code-oss-info.plistc &nbsp;&middot;&nbsp; package.nls.json &nbsp;&middot;&nbsp; extensions/gettingStarted</span>
+        <div class="mine"><b>Why it's mine:</b> kills the last corporate traces in the chrome Drey reads.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P1 -->
+  <div class="phase p1">
+    <div class="phaseHead"><span class="phaseId" style="color:var(--blue)">P1 — Deep personality</span><span class="phaseGoal">Make the explorer + terminal feel like Ursula</span></div>
+    <div class="phaseWhy">Once chrome is branded, deepen the two surfaces Drey stares at most: the file explorer (product icons) and the terminal (exit-dots, command blocks).</div>
+
+    <div class="step">
+      <div class="effort m">M</div>
+      <div>
+        <div class="stepTitle">Create + register the Ursula product-icon theme</div>
+        <div class="stepChange">Add a <b>new</b> <code>productIconThemes</code> array to product.json (it does not exist yet) pointing at a theme file. Schema gotcha: only <code>foreground</code>/<code>background</code>/<code>accent</code> keys — any extra key breaks rendering.</div>
+        <span class="ref">product.json (new productIconThemes) &nbsp;+&nbsp; extensions/ursula-product-icons/themes/theme.json &nbsp;(fg #F4F1EC / bg #0B0B0D / accent #C2A878)</span>
+        <div class="mine"><b>Why it's mine:</b> every file icon wears Bone+Gold instead of stock VS Code blue.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="effort s">S</div>
+      <div>
+        <div class="stepTitle">Style the terminal exit-dot + cursor in Bone+Gold</div>
+        <div class="stepChange">Add <code>terminal.*</code> color keys to the existing theme so exit indicators read gold(success)/red(fail), not the default green/red. Then port OSC 133 command blocks from the Tauri project.</div>
+        <span class="ref">extensions/theme-defaults/themes/ursula-dark.json &nbsp;+&nbsp; ~/My Apps/ursula-terminal/src/shell-integration</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="effort m">M</div>
+      <div>
+        <div class="stepTitle">Port Drey's workspaces from the Tauri project</div>
+        <div class="stepChange">hermes-vps = SSH Remote workspace; 1bb / founders-social / personal = local <code>.code-workspace</code> files. SSH keys via ssh-agent only — never hardcode secrets.</div>
+        <span class="ref">~/My Apps/ursula-terminal (workspace configs) &nbsp;&rarr;&nbsp; ~/MyApps/ursula-ide workspaces/</span>
+        <div class="mine"><b>Why it's mine:</b> his real projects open with one click — Ursula feels like home.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P2 -->
+  <div class="phase p2">
+    <div class="phaseHead"><span class="phaseId" style="color:var(--muted)">P2 — Power &amp; polish</span><span class="phaseGoal">Completeness touches, lowest visibility</span></div>
+    <div class="phaseWhy">Do last, after the high-impact work is proven. Splash + chrome only matter on cold start / multi-window; the settings sweep bakes in Drey's preferences.</div>
+
+    <div class="step">
+      <div class="effort m">M</div>
+      <div>
+        <div class="stepTitle">Replace the splash / loading screen</div>
+        <div class="stepChange">Create a Bone+Gold splash (gold on bone, no VS Code logo). Confirm the build pipeline copies it into the bundle (asset paths differ by platform).</div>
+        <span class="ref">resources/splash.png &nbsp;+&nbsp; build/ asset pipeline</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="effort l">L</div>
+      <div>
+        <div class="stepTitle">Finish the window chrome (title bar + traffic-light container)</div>
+        <div class="stepChange">Restyle the title bar to Bone. <b>macOS constraint:</b> red/yellow/green traffic-lights are system-rendered — full recolor needs a custom title bar (<code>titleBarStyle: "customButtonsOnHover"</code> / <code>"hidden"</code>). Don't promise recolored buttons you can't deliver.</div>
+        <span class="ref">src/vs/platform/native/ &nbsp;+&nbsp; Electron main process window config</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="effort m">M</div>
+      <div>
+        <div class="stepTitle">Settings-copy sweep + Warp-style inline previews</div>
+        <div class="stepChange">Bake Drey's preferred defaults (font size, tab size, format-on-save, telemetry off) into shipped defaults. Investigate whether this fork's xterm supports inline image/hyperlink previews (iTerm2-style) before committing — enable if supported, else log as future work.</div>
+        <span class="ref">default settings JSON &nbsp;+&nbsp; src/vs/workbench/contrib/terminal/browser/xterm/xtermTerminal.ts</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUME -->
+  <div class="resume">
+    <h3>Resume prompt (copy-paste into a fresh session)</h3>
+    <pre>Resume Project Ursula (IDE). Code-OSS v1.126.0 fork at <b>~/MyApps/ursula-ide</b> (fork on 'ursula' branch, main = upstream mirror). It BUILDS and BOOTS (verified): Bone+Gold theme, Open VSX wired (Kilo Code installable), unsigned dev. 3 commits: 5147772a (rebrand+OpenVSX), 7289bce0 (Bone+Gold theme), 5e136068 (docs).
+
+Read <b>~/MyApps/ursula-ide/CONTEXT.md + ROADMAP-v2.md + CHANGELOG.md</b> first.
+
+Relaunch:
+<span class="cmd">export PATH=~/.nvm/versions/node/v24.15.0/bin:$PATH &amp;&amp; cd ~/MyApps/ursula-ide &amp;&amp; ./scripts/code.sh</span>
+(path MUST stay spaceless; Node MUST be 24.15.0)
+
+NEXT = make it mine, in order:
+ <b>P0 (flagship)</b> Signature launch intro: Electron splash + canvas hyperspace starfield + animated "Hello {Name}, build something great" (name from first-run prompt, stored in .ursula).
+ <b>P0</b> UI font (style.css:12 -> Big Shoulders+JetBrains Mono, keep CJK fallbacks); enable terminal gpuAcceleration+shellIntegration in default settings; bear Dock icon via iconutil replacing resources/darwin/code.icns; sweep 'VS Code'->'Ursula' strings (keep MIT copyright).
+ <b>P1</b> new productIconThemes array in product.json (only fg/bg/accent keys); style terminal exit-dots; port workspaces from ~/My Apps/ursula-terminal.
+ <b>P2</b> window chrome + splash.
+
+Visual-identity file refs above are reliable; re-derive branding/workspace/terminal/bear-asset exact paths with grep at the start of each phase (those map agents thrashed in the prior session).</pre>
+    <p>Full handoff with done/state/decisions/gotchas: <code>~/MyApps/ursula-ide/docs/handoffs/HANDOFF-URSULA-MAKE-IT-MINE-20260618.html</code></p>
+  </div>
+
+  <div class="foot">Project Ursula &nbsp;&middot;&nbsp; Bone+Gold &nbsp;&middot;&nbsp; generated 2026-06-18</div>
+</div>
+</body>
+</html>

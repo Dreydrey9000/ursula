@@ -1,0 +1,84 @@
+{
+  "name": "ursula-ram-guard",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "0.0.1",
+  "publisher": "vscode",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.5.0"
+  },
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension",
+  "scripts": {
+    "compile": "gulp compile-extension:ursula-ram-guard",
+    "watch": "gulp watch-extension:ursula-ram-guard"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "ursula.ramGuard.show",
+        "title": "%command.show%",
+        "category": "Ursula"
+      },
+      {
+        "command": "ursula.ramGuard.scanInterrupted",
+        "title": "%command.scanInterrupted%",
+        "category": "Ursula"
+      }
+    ],
+    "configuration": {
+      "title": "Ursula RAM Guard",
+      "properties": {
+        "ursula.ramGuard.warnThresholdPct": {
+          "type": "number",
+          "default": 75,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "%config.warnThresholdPct%"
+        },
+        "ursula.ramGuard.criticalThresholdPct": {
+          "type": "number",
+          "default": 88,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "%config.criticalThresholdPct%"
+        },
+        "ursula.ramGuard.pollSeconds": {
+          "type": "number",
+          "default": 5,
+          "minimum": 2,
+          "maximum": 120,
+          "description": "%config.pollSeconds%"
+        }
+      }
+    },
+    "configurationDefaults": {
+      "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/**": true,
+        "**/.next/**": true,
+        "**/dist/**": true,
+        "**/out/**": true,
+        "**/.ursula/**": true,
+        "**/.DS_Store": true
+      },
+      "search.followSymlinks": false,
+      "search.useIgnoreFiles": true,
+      "telemetry.telemetryLevel": "off",
+      "workbench.enableExperiments": false
+    }
+  },
+  "devDependencies": {
+    "@types/node": "24.x"
+  }
+}

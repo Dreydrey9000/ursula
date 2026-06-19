@@ -1,0 +1,9 @@
+{
+  "displayName": "Ursula RAM Guard",
+  "description": "Live RAM-pressure monitor + Claude-session dashboard + crash-recovery. Keeps many Claude Code sessions from surprising you with an OOM.",
+  "command.show": "Show RAM Guard Dashboard",
+  "command.scanInterrupted": "Scan for Interrupted Claude Sessions",
+  "config.warnThresholdPct": "System RAM-used percent at which the status bar turns a warning color.",
+  "config.criticalThresholdPct": "System RAM-used percent at which the status bar turns an error color and a pressure alert fires.",
+  "config.pollSeconds": "How often (seconds) to refresh RAM + session stats."
+}
