@@ -416,6 +416,9 @@ import './contrib/userDataSync/browser/userDataSync.contribution.js';
 // User Data Profiles
 import './contrib/userDataProfile/browser/userDataProfile.contribution.js';
 
+// Ursula Modes
+import './contrib/ursulaModes/browser/ursulaModes.contribution.js';
+
 // Continue Edit Session
 import './contrib/editSessions/browser/editSessions.contribution.js';
 

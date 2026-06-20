@@ -2,6 +2,24 @@
 
 All notable changes to the Ursula fork. Format: `## [YYYY-MM-DD]` with sections, one line per change, include the why.
 
+## [2026-06-20] — Modes system (Terax/Warp/Cursor/Cate/Lite) + movable Sessions rail + RAM Guard v2
+
+### Added
+- **Five one-click "modes"** (`src/vs/workbench/contrib/ursulaModes/`): Terax (minimal/fast/keyboard), Warp (maximized terminal + gold command blocks + the real Warp Dark ANSI palette + block/pane keys), Cursor (AI chat on the right via the bundled Claude agent + Cmd+L/Cmd+I + Tab autocomplete), Cate (warm Ember theme + Sessions rail, replicating Drey's daily driver), Lite (hardware-tuned RAM/VRAM optimizer). Each mode is a native VS Code **Profile** that shares ONE installed extension set (`useDefaultFlags.extensions=true`) — so Claude Code, Kilo Code, and the full marketplace work in EVERY mode and are never removed on switch. A left status-bar pill + `Cmd+K M` open the switcher.
+- **Movable vertical Sessions rail** (`ursulaSessions` TreeView in ursula-ram-guard): lists live Claude Code sessions (reuses the `~/.claude/projects` scan), draggable between sidebars; plus vertical terminal tabs baked into the lean modes.
+- **RAM Guard v2** — a dark Bone-on-black webview dashboard (RAM gauge + memory-pressure bar + VRAM/GPU readout + per-session Free/Resume/Reveal + "Optimize now"), **hardware-aware**: detects RAM (vm_stat) + VRAM (`system_profiler SPDisplaysDataType`) and recommends a mode by RAM tier (Apple-Silicon unified memory treated as capable, not a weak GPU). Optimizer is user-choice: `ursula.optimizer.mode` = recommend | auto | off.
+- **"Ursula Cate" Ember color theme** (`extensions/theme-defaults/`).
+
+### Fixed
+- **RAM Guard "Free RAM now" was a dead branch** — the label said "Free RAM now" but the handler only matched `startsWith('Kill')`, so the #1-priority action silently did nothing. Deleted the dead path; kills now re-validate the pid against the current sessions snapshot before SIGTERM (never kill a recycled pid).
+- **Switcher silent no-op** — picking "Default" while already on Default (or re-picking the current mode) now gives feedback instead of looking broken, and no longer re-runs the toggle-based startup commands (which had flipped the panel/side bar back off).
+
+### Changed
+- **Black backgrounds** (per Drey: "we do black in here"): RAM Guard dashboard converted from Bone-paper to warm near-black; gold kept as the accent.
+
+### Why
+Drey wanted to pick his own adventure across the terminal emulators he likes (Terax/Warp/Cursor/Cate) without losing capability or extensions, and to make Ursula run great on any machine regardless of RAM/VRAM. Modes-as-Profiles keeps it simple (data, not code) and the shared extension set keeps every room fully powered.
+
 ## [2026-06-19] — Overnight iter 4: Drey icon + clickable launcher
 
 ### Added

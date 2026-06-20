@@ -25,6 +25,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "ursula.ramGuard.openPanel",
+        "title": "RAM Guard: Open Dashboard",
+        "category": "Ursula"
+      },
+      {
         "command": "ursula.ramGuard.show",
         "title": "%command.show%",
         "category": "Ursula"
@@ -33,8 +38,73 @@
         "command": "ursula.ramGuard.scanInterrupted",
         "title": "%command.scanInterrupted%",
         "category": "Ursula"
+      },
+      {
+        "command": "ursula.optimizer.setMode",
+        "title": "Optimizer: Set Mode (Recommend / Auto / Off)",
+        "category": "Ursula"
+      },
+      {
+        "command": "ursula.sessions.resume",
+        "title": "Resume Session",
+        "category": "Ursula",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "ursula.sessions.reveal",
+        "title": "Reveal Transcript",
+        "category": "Ursula",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "ursula.sessions.free",
+        "title": "Free RAM (close session — chat is safe on disk)",
+        "category": "Ursula",
+        "icon": "$(trash)"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ursulaSessionsContainer",
+          "title": "Ursula Sessions",
+          "icon": "$(flame)"
+        }
+      ]
+    },
+    "views": {
+      "ursulaSessionsContainer": [
+        {
+          "id": "ursulaSessions",
+          "name": "Ursula Sessions",
+          "contextualTitle": "Ursula Sessions"
+        }
+      ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "ursula.sessions.resume",
+          "when": "view == ursulaSessions && viewItem == ursulaSession",
+          "group": "inline@1"
+        },
+        {
+          "command": "ursula.sessions.reveal",
+          "when": "view == ursulaSessions && viewItem == ursulaSession",
+          "group": "inline@2"
+        },
+        {
+          "command": "ursula.sessions.free",
+          "when": "view == ursulaSessions && viewItem == ursulaSession",
+          "group": "inline@3"
+        },
+        {
+          "command": "ursula.sessions.resume",
+          "when": "view == ursulaSessions && viewItem == ursulaInterruptedSession",
+          "group": "inline@1"
+        }
+      ]
+    },
     "configuration": {
       "title": "Ursula RAM Guard",
       "properties": {
@@ -58,6 +128,17 @@
           "minimum": 2,
           "maximum": 120,
           "description": "%config.pollSeconds%"
+        },
+        "ursula.optimizer.mode": {
+          "type": "string",
+          "enum": ["recommend", "auto", "off"],
+          "default": "recommend",
+          "enumDescriptions": [
+            "Recommend: show a 'Recommended for your Mac' badge + a one-click 'Optimize now' button. You decide. (Default.)",
+            "Auto: on a weak machine, apply Lite automatically once at startup. Reversible — switch back anytime.",
+            "Off: never suggest or apply Lite. No badge, no auto-switch."
+          ],
+          "description": "How proactive RAM Guard's hardware optimizer is: recommend Lite, auto-apply Lite once on weak machines, or stay off."
         }
       }
     },

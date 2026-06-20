@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ursula — Visual Plan (mockup)</title>
+<style>
+  :root{
+    /* DARK plan chrome — warm near-black surfaces, light text, gold kept */
+    --paper:#14130F;        /* deepest warm near-black (page) */
+    --paper-2:#1B1813;      /* panel surface */
+    --paper-3:#211D17;      /* raised surface (titlebars, chips) */
+    --ink:#ECE6D9;          /* warm off-white ink */
+    --ink-2:#B8B0A2;        /* muted ink */
+    --ink-3:#8A8276;        /* faint ink for meta (AA on dark surfaces) */
+    --gold:#C2A878;         /* warm gold accent (kept) */
+    --gold-deep:#D4BC8C;    /* lifted so gold text reads on dark */
+    --gold-soft:#3A3122;    /* deep gold wash for soft-pill backgrounds */
+    --line:#2C2820;         /* hairline */
+    --line-2:#39342A;
+    --good:#76B583;         /* calm green (lifted for dark) */
+    --warn:#D9AE55;         /* amber (lifted for dark) */
+    --crit:#D2786C;         /* muted red (lifted for dark) */
+    --editor-bg:#191712;    /* IDE editor surface */
+    --term-bg:#0E0D0A;      /* terminal, darker than chrome */
+    --term-ink:#E9E3D2;
+    --radius:14px;
+    --radius-sm:9px;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -14px rgba(0,0,0,.66);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4),0 6px 16px -10px rgba(0,0,0,.6);
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Helvetica,Arial,sans-serif;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(194,168,120,.10) 0%, rgba(194,168,120,0) 60%),
+      var(--paper);
+    color:var(--ink);
+    font-family:var(--font);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+
+  /* ---------- page frame ---------- */
+  .wrap{max-width:1240px;margin:0 auto;padding:26px 22px 64px}
+
+  .topline{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+  .brandblock{display:flex;flex-direction:column;gap:4px}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-deep);font-weight:600}
+  .kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+  h1.title{font-size:30px;line-height:1.05;margin:2px 0 0;font-weight:700;letter-spacing:-.02em}
+  h1.title em{font-style:normal;color:var(--gold-deep)}
+  .sub{font-size:13.5px;color:var(--ink-3);max-width:560px}
+  .mocktag{
+    align-self:center;
+    border:1px solid var(--line-2);background:var(--paper-2);
+    color:var(--ink-2);font-size:11.5px;font-weight:600;letter-spacing:.04em;
+    padding:7px 12px;border-radius:999px;white-space:nowrap;
+    box-shadow:var(--shadow-sm)
+  }
+  .mocktag b{color:var(--gold-deep)}
+
+  /* ---------- screen tabs ---------- */
+  nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 20px;padding:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+  nav.tabs button{
+    appearance:none;border:1px solid transparent;background:transparent;cursor:pointer;
+    font-family:var(--font);color:var(--ink-2);font-size:13px;font-weight:600;
+    padding:9px 14px;border-radius:10px;display:flex;align-items:center;gap:9px;transition:.16s
+  }
+  nav.tabs button .ix{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  nav.tabs button:hover{background:var(--paper);color:var(--ink)}
+  nav.tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  nav.tabs button[aria-selected="true"]{
+    background:var(--ink);color:var(--paper);box-shadow:var(--shadow-sm)
+  }
+  nav.tabs button[aria-selected="true"] .ix{color:var(--gold)}
+  nav.tabs button.hero-tab[aria-selected="true"]{background:var(--gold-deep)}
+
+  /* ---------- screen container ---------- */
+  .screen{display:none;animation:fade .26s ease}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .screenhead{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:0 2px 12px;flex-wrap:wrap}
+  .screenhead h2{font-size:18px;margin:0;font-weight:700;letter-spacing:-.01em}
+  .screenhead h2 .pre{color:var(--gold-deep);font-weight:700;margin-right:8px}
+  .screenhead p{margin:0;font-size:13px;color:var(--ink-3);max-width:600px}
+
+  /* ============================================================= */
+  /* IDE WORKBENCH CHROME                                            */
+  /* ============================================================= */
+  .ide{
+    border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;
+    background:var(--editor-bg);box-shadow:var(--shadow);
+    display:flex;flex-direction:column;height:560px
+  }
+  /* title bar */
+  .titlebar{
+    display:flex;align-items:center;gap:12px;height:38px;flex:0 0 38px;
+    background:var(--paper-3);border-bottom:1px solid var(--line-2);padding:0 12px
+  }
+  .traffic{display:flex;gap:7px}
+  .traffic i{width:11px;height:11px;border-radius:50%;display:block}
+  .traffic i.r{background:#E0857C}.traffic i.y{background:#E3C271}.traffic i.g{background:#9FC58C}
+  .menubar{display:flex;gap:14px;font-size:12px;color:var(--ink-2);font-weight:500}
+  .menubar.compact{gap:9px;opacity:.8}
+  .titlebar .cmdcenter{
+    margin:0 auto;background:var(--paper);border:1px solid var(--line-2);border-radius:7px;
+    height:24px;min-width:220px;max-width:300px;display:flex;align-items:center;justify-content:center;
+    gap:8px;font-size:11.5px;color:var(--ink-3)
+  }
+  .titlebar .layoutctl{display:flex;gap:7px;color:var(--ink-3)}
+  .titlebar .layoutctl i{width:15px;height:13px;border:1.4px solid currentColor;border-radius:3px;display:block;opacity:.7}
+
+  /* body row: activitybar / sidebar / main / aux */
+  .ide-body{flex:1;display:flex;min-height:0}
+
+  .activitybar{
+    flex:0 0 48px;background:var(--paper-3);border-right:1px solid var(--line-2);
+    display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0
+  }
+  .activitybar .ai{
+    width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    color:var(--ink-3);cursor:default;position:relative
+  }
+  .activitybar .ai svg{width:18px;height:18px}
+  .activitybar .ai.on{color:var(--ink)}
+  .activitybar .ai.on::before{content:"";position:absolute;left:-10px;top:6px;bottom:6px;width:2px;border-radius:2px;background:var(--gold)}
+
+  .sidebar{
+    flex:0 0 200px;background:var(--paper-2);border-right:1px solid var(--line-2);
+    padding:10px 0;overflow:hidden
+  }
+  .sidebar .sbhead{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);padding:2px 14px 8px;font-weight:700}
+  .tree{font-size:12.5px;color:var(--ink-2)}
+  .tree .row{display:flex;align-items:center;gap:7px;padding:3px 14px;cursor:default}
+  .tree .row.indent{padding-left:28px}
+  .tree .row.indent2{padding-left:42px}
+  .tree .row.active{background:var(--paper-3);color:var(--ink);font-weight:600;box-shadow:inset 2px 0 0 var(--gold)}
+  .tree .row svg{width:13px;height:13px;flex:0 0 13px;color:var(--gold-deep);opacity:.75}
+  .tree .row .fdot{width:7px;height:7px;border-radius:2px;background:var(--ink-3);opacity:.5;flex:0 0 7px}
+
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--editor-bg)}
+
+  /* tab strip */
+  .tabstrip{display:flex;align-items:center;height:34px;flex:0 0 34px;background:var(--paper-2);border-bottom:1px solid var(--line-2);padding:0 6px;gap:2px;overflow:hidden}
+  .etab{display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;border-radius:7px 7px 0 0;font-size:12px;color:var(--ink-3);cursor:default;white-space:nowrap}
+  .etab.active{background:var(--editor-bg);color:var(--ink);font-weight:600;border:1px solid var(--line-2);border-bottom:none;box-shadow:0 -1px 0 var(--gold)}
+  .etab .x{opacity:.4;font-size:13px}
+  .etab .glyph{width:8px;height:8px;border-radius:2px;background:var(--gold);opacity:.8}
+  .single-anchor{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink);font-weight:600;padding:0 12px}
+  .single-anchor .glyph{width:8px;height:8px;border-radius:2px;background:var(--gold)}
+  .single-anchor .meta{color:var(--ink-3);font-weight:500;font-size:11px}
+
+  .breadcrumbs{height:26px;flex:0 0 26px;display:flex;align-items:center;gap:6px;padding:0 14px;font-size:11.5px;color:var(--ink-3);border-bottom:1px solid var(--line)}
+  .breadcrumbs span.sep{opacity:.5}
+
+  /* editor surface */
+  .editor{flex:1;display:flex;min-height:0;position:relative;overflow:hidden}
+  .gutter{flex:0 0 44px;padding:12px 0;text-align:right;font-family:var(--mono);font-size:11px;color:var(--ink-3);user-select:none;opacity:.55;line-height:1.7}
+  .gutter div{padding-right:12px}
+  .code{flex:1;padding:12px 8px;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--ink-2);overflow:hidden}
+  .code .ln{white-space:pre;display:block}
+  .code .kw{color:var(--gold-deep);font-weight:600}
+  .code .st{color:var(--good)}
+  .code .cm{color:var(--ink-3);opacity:.7;font-style:italic}
+  .code .fn{color:#A99BD4}
+  .code .nm{color:var(--ink)}
+  .minimap{flex:0 0 56px;background:var(--paper-2);border-left:1px solid var(--line);padding:10px 6px;display:flex;flex-direction:column;gap:3px}
+  .minimap i{height:4px;border-radius:2px;background:var(--line-2);display:block}
+  .minimap i.w70{width:70%}.minimap i.w40{width:40%}.minimap i.w90{width:90%}.minimap i.w55{width:55%}.minimap i.gold{background:var(--gold-soft)}
+
+  /* terminal panel */
+  .panel{flex:0 0 150px;background:var(--term-bg);border-top:1px solid #15150f;display:flex;flex-direction:column;min-height:0}
+  .panel.tall{flex:0 0 280px}
+  .panel.max{flex:1}
+  .panel-tabs{display:flex;align-items:center;gap:14px;height:30px;flex:0 0 30px;padding:0 14px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .panel-tabs .pt{font-size:11px;color:#A7A290;letter-spacing:.04em}
+  .panel-tabs .pt.on{color:var(--gold);font-weight:600;position:relative}
+  .panel-tabs .pt.on::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:2px;background:var(--gold);border-radius:2px}
+  .panel-tabs .grow{flex:1}
+  .panel-tabs .pmax{font-size:10.5px;color:#8d8979;border:1px solid rgba(255,255,255,.14);border-radius:5px;padding:2px 7px}
+  .term{flex:1;padding:10px 14px;font-family:var(--mono);font-size:12px;line-height:1.75;color:var(--term-ink);overflow:hidden}
+  .term .l{white-space:pre-wrap;display:block}
+  .term .prompt{color:var(--gold)}
+  .term .path{color:#8FB7C9}
+  .term .ok{color:#8FC58C}
+  .term .dim{color:#8d8979}
+  .term .cursor{display:inline-block;width:7px;height:14px;background:var(--gold);vertical-align:-2px;animation:blink 1.1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* WARP command blocks */
+  .cmdblock{position:relative;padding:8px 14px 8px 18px;margin:0 -14px;border-bottom:1px solid rgba(255,255,255,.05)}
+  .cmdblock::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);border-radius:0 2px 2px 0}
+  .cmdblock .exit{position:absolute;left:6px;top:11px;width:7px;height:7px;border-radius:50%}
+  .cmdblock .exit.ok{background:#7FBF76;box-shadow:0 0 0 2px rgba(127,191,118,.18)}
+  .cmdblock .exit.bad{background:#D2786C;box-shadow:0 0 0 2px rgba(210,120,108,.2)}
+  .cmdblock .cmdline{color:var(--term-ink)}
+  .cmdblock .cmdline .prompt{color:var(--gold)}
+  .cmdblock .out{color:#A7A290;font-size:11.5px}
+
+  /* status bar */
+  .statusbar{
+    flex:0 0 26px;height:26px;display:flex;align-items:center;gap:0;background:var(--ink);color:var(--paper);
+    font-size:11px;padding:0 6px
+  }
+  .statusbar .pill{display:flex;align-items:center;gap:6px;padding:0 10px;height:100%;cursor:default}
+  .statusbar .pill.mode{background:var(--gold-deep);color:#1c1a14;font-weight:700}
+  .statusbar .pill.mode svg{width:12px;height:12px}
+  .statusbar .pill.ram{margin-left:auto;background:rgba(255,255,255,.08)}
+  .statusbar .pill.ram b{font-weight:700}
+  .statusbar .pill .ramdot{width:7px;height:7px;border-radius:50%;background:var(--good)}
+  .statusbar .pill .ramdot.amber{background:var(--warn)}
+  .statusbar .grow{flex:1}
+  .statusbar .seg{padding:0 9px;opacity:.7}
+
+  /* aux side bar (Cursor AI panel) */
+  .auxbar{flex:0 0 270px;background:var(--paper-2);border-left:1px solid var(--line-2);display:flex;flex-direction:column;min-width:0}
+  .auxhead{display:flex;align-items:center;gap:8px;height:34px;flex:0 0 34px;padding:0 14px;border-bottom:1px solid var(--line-2);font-size:12px;font-weight:700}
+  .auxhead .gem{width:14px;height:14px;border-radius:4px;background:linear-gradient(135deg,var(--gold),var(--gold-deep))}
+  .auxhead .tag{margin-left:auto;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);background:var(--gold-soft);padding:2px 7px;border-radius:999px;font-weight:700}
+  .chat{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px;overflow:hidden;font-size:12px}
+  .msg{padding:10px 12px;border-radius:12px;line-height:1.5}
+  .msg.user{background:var(--ink);color:var(--paper);align-self:flex-end;border-bottom-right-radius:4px;max-width:90%}
+  .msg.ai{background:var(--paper);border:1px solid var(--line-2);color:var(--ink-2);border-bottom-left-radius:4px;box-shadow:var(--shadow-sm)}
+  .msg.ai .who{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);font-weight:700;margin-bottom:5px}
+  .msg.ai code{font-family:var(--mono);font-size:11px;background:var(--paper-3);padding:1px 5px;border-radius:5px}
+  .chatbox{flex:0 0 auto;margin:0 12px 12px;border:1px solid var(--line-2);background:var(--paper);border-radius:11px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3)}
+  .chatbox .send{margin-left:auto;width:24px;height:24px;border-radius:7px;background:var(--gold);display:flex;align-items:center;justify-content:center;color:#1c1a14}
+
+  /* LITE optimizer banner */
+  .litebanner{
+    margin:0;display:flex;align-items:center;gap:14px;padding:11px 16px;
+    background:linear-gradient(90deg, rgba(194,168,120,.16), rgba(194,168,120,.04));
+    border-bottom:1px solid var(--line-2);flex:0 0 auto
+  }
+  .litebanner .spark{width:26px;height:26px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center;flex:0 0 26px;box-shadow:0 2px 8px -2px rgba(169,140,88,.6)}
+  .litebanner .spark svg{width:15px;height:15px;color:#1c1a14}
+  .litebanner .lt{font-size:12.5px;color:var(--ink-2)}
+  .litebanner .lt b{color:var(--ink);font-weight:700}
+  .litebanner .freed{margin-left:auto;font-size:12px;font-weight:700;color:var(--gold-deep);background:var(--gold-soft);padding:5px 11px;border-radius:999px;white-space:nowrap}
+
+  /* tiny captions under each mockup */
+  .legend{margin:12px 2px 0;display:flex;gap:10px;flex-wrap:wrap}
+  .legend .chip{font-size:11.5px;color:var(--ink-2);background:var(--paper-2);border:1px solid var(--line);border-radius:999px;padding:5px 11px;display:flex;align-items:center;gap:7px}
+  .legend .chip b{color:var(--gold-deep);font-weight:700}
+  .legend .chip .sq{width:8px;height:8px;border-radius:2px;background:var(--gold)}
+
+  /* open spec question — must be decided before getRecommendedMode() is coded */
+  .specflag{margin:14px 2px 0;display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border-radius:var(--radius-sm);background:rgba(201,154,59,.10);border:1px solid var(--warn)}
+  .specflag .qm{flex:0 0 22px;width:22px;height:22px;border-radius:6px;background:var(--warn);color:#1c1a14;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+  .specflag .ft{font-size:12px;color:var(--ink-2);line-height:1.5}
+  .specflag .ft b{color:var(--ink);font-weight:800}
+  .specflag .ft code{font-family:var(--mono);font-size:11px;background:var(--paper-3);padding:1px 5px;border-radius:5px;color:var(--ink)}
+  .specflag .tag{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);font-weight:800;display:block;margin-bottom:3px}
+
+  /* hint floating */
+  .floathint{position:absolute;right:14px;bottom:42px;background:rgba(35,35,31,.92);color:var(--gold-soft);font-size:11px;padding:7px 11px;border-radius:9px;border:1px solid rgba(194,168,120,.4);font-family:var(--mono);backdrop-filter:blur(2px)}
+  .floathint kbd{font-family:var(--mono);background:rgba(194,168,120,.22);color:var(--gold-soft);padding:1px 5px;border-radius:4px;border:1px solid rgba(194,168,120,.35)}
+
+  /* ============================================================= */
+  /* SWITCHER SCREEN                                                 */
+  /* ============================================================= */
+  .hwbanner{
+    display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:var(--radius);
+    background:var(--ink);color:var(--paper);box-shadow:var(--shadow);margin-bottom:18px;flex-wrap:wrap
+  }
+  .hwbanner .rad{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(194,168,120,.25);animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 7px rgba(194,168,120,.06)}}
+  .hwbanner .lbl{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .hwbanner .val{font-size:14px;font-weight:600}
+  .hwbanner .val em{font-style:normal;color:var(--gold-soft)}
+  .hwbanner .verdict{margin-left:auto;font-size:12px;color:var(--paper);opacity:.85;display:flex;align-items:center;gap:8px}
+  .hwbanner .verdict b{color:var(--gold);font-weight:700}
+
+  .cardgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:13px}
+  @media(max-width:1100px){.cardgrid{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:760px){.cardgrid{grid-template-columns:repeat(2,1fr)}}
+  .modecard{
+    position:relative;background:var(--editor-bg);border:1px solid var(--line-2);border-radius:var(--radius);
+    padding:18px 16px 16px;box-shadow:var(--shadow-sm);transition:.18s;cursor:pointer;display:flex;flex-direction:column;gap:10px;min-height:260px
+  }
+  .modecard:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--gold)}
+  .modecard:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+  .modecard.reco{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),var(--shadow)}
+  .modecard .badge{
+    position:absolute;top:-11px;left:14px;display:inline-flex;align-items:center;gap:6px;
+    background:var(--gold);color:#1c1a14;font-size:10.5px;font-weight:800;letter-spacing:.02em;
+    padding:5px 10px;border-radius:999px;box-shadow:var(--shadow-sm)
+  }
+  .modecard .badge svg{width:12px;height:12px}
+  .modecard .mc-top{display:flex;align-items:center;justify-content:space-between}
+  .modecard .mname{font-size:16px;font-weight:800;letter-spacing:.02em}
+  .modecard .mname .hero-pin{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);margin-left:7px;vertical-align:middle}
+  .modecard .glyphbox{width:32px;height:32px;border-radius:9px;background:var(--paper-2);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;color:var(--gold-deep)}
+  .modecard .glyphbox svg{width:17px;height:17px}
+  .modecard .mtag{font-size:12.5px;color:var(--ink-2);line-height:1.45;flex:1}
+  .modecard .ram{display:flex;flex-direction:column;gap:5px;margin-top:auto}
+  .modecard .ram .rlbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+  .modecard .ram .rlbl b{color:var(--gold-deep)}
+  .meter{height:7px;border-radius:5px;background:var(--paper-3);overflow:hidden}
+  .meter span{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--gold),var(--gold-deep))}
+  .modecard .pick{font-size:11.5px;color:var(--gold-deep);font-weight:700;display:flex;align-items:center;gap:6px}
+  .modecard .pick svg{width:13px;height:13px}
+
+  /* default-back affordance */
+  .defrow{margin-top:14px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-3)}
+  .defrow button{appearance:none;border:1px dashed var(--line-2);background:transparent;color:var(--ink-2);font-family:var(--font);font-size:12px;font-weight:600;padding:7px 13px;border-radius:9px;cursor:pointer}
+  .defrow button:hover{border-color:var(--gold);color:var(--ink)}
+
+  /* ============================================================= */
+  /* RAM GUARD DASHBOARD                                            */
+  /* ============================================================= */
+  .guard{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:start}
+  @media(max-width:980px){.guard{grid-template-columns:1fr}}
+  .gcard{background:var(--editor-bg);border:1px solid var(--line-2);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm)}
+  .gcard h3{margin:0 0 4px;font-size:13px;font-weight:700;letter-spacing:.01em}
+  .gcard .h-sub{font-size:11.5px;color:var(--ink-3);margin:0 0 14px}
+
+  .gauge-num{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+  .gauge-num .big{font-size:34px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .gauge-num .of{font-size:13px;color:var(--ink-3)}
+  .gauge-num .state{margin-left:auto;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:4px 10px;border-radius:999px}
+  .gauge-num .state.warn{color:var(--warn);background:rgba(217,174,85,.16)}
+  .biggauge{height:22px;border-radius:8px;background:var(--paper-3);position:relative;overflow:hidden;border:1px solid var(--line)}
+  .biggauge .fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--good) 0%,var(--good) 55%,var(--warn) 78%,var(--crit) 100%)}
+  .biggauge .ticks{position:absolute;inset:0;pointer-events:none}
+  .biggauge .tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(32,32,30,.18)}
+  .biggauge .tick.warn{left:75%}.biggauge .tick.crit{left:88%}
+  .ticklbls{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);margin-top:6px;font-variant-numeric:tabular-nums}
+  .ticklbls .warnm{color:var(--warn);font-weight:600}.ticklbls .critm{color:var(--crit);font-weight:600}
+
+  .subbar-wrap{margin-top:16px}
+  .subbar-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-2);margin-bottom:6px}
+  .subbar-lbl b{font-variant-numeric:tabular-nums}
+  .subbar{height:10px;border-radius:6px;background:var(--paper-3);overflow:hidden;border:1px solid var(--line)}
+  .subbar .f{height:100%;background:var(--warn);border-radius:6px}
+  .subbar-note{font-size:10.5px;color:var(--ink-3);margin-top:6px}
+
+  .hwgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 4px}
+  .hwcell{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 13px}
+  .hwcell .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .hwcell .v{font-size:15px;font-weight:700;margin-top:3px}
+  .hwcell .v small{font-size:11px;color:var(--ink-3);font-weight:500}
+  .verdictcard{
+    display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border-radius:var(--radius-sm);
+    background:linear-gradient(90deg,rgba(194,168,120,.16),rgba(194,168,120,.05));border:1px solid var(--gold-soft)
+  }
+  .verdictcard .star{width:30px;height:30px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center;color:#1c1a14;flex:0 0 30px}
+  .verdictcard .star svg{width:16px;height:16px}
+  .verdictcard .vt{font-size:12.5px;color:var(--ink-2)}
+  .verdictcard .vt b{color:var(--ink);font-weight:800}
+
+  .optbtn{
+    margin-top:14px;width:100%;appearance:none;border:none;cursor:pointer;font-family:var(--font);
+    background:var(--gold);color:#1c1a14;font-size:14px;font-weight:800;letter-spacing:.01em;
+    padding:14px;border-radius:11px;box-shadow:0 6px 18px -8px rgba(169,140,88,.9);display:flex;align-items:center;justify-content:center;gap:9px;transition:.16s
+  }
+  .optbtn:hover{transform:translateY(-1px);box-shadow:0 10px 22px -8px rgba(169,140,88,1)}
+  .optbtn svg{width:16px;height:16px}
+  .optsub{font-size:11px;color:var(--ink-3);text-align:center;margin-top:8px}
+
+  .hogbtn{margin-top:10px;width:100%;appearance:none;cursor:pointer;font-family:var(--font);background:var(--paper-2);border:1px solid var(--line-2);color:var(--ink);font-size:12.5px;font-weight:700;padding:11px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .hogbtn:hover{border-color:var(--gold)}
+  .hogbtn svg{width:14px;height:14px;color:var(--crit)}
+
+  /* session table */
+  .sesshead{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 12px}
+  .sesshead h3{margin:0;font-size:13px;font-weight:700}
+  .sesshead .count{font-size:11px;color:var(--ink-3);background:var(--paper-2);border:1px solid var(--line);border-radius:999px;padding:3px 9px;font-weight:600}
+  .sesscard{background:var(--editor-bg);border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow-sm)}
+  .sesscard .top{display:flex;align-items:center;gap:10px}
+  .sesscard .dirico{width:26px;height:26px;border-radius:7px;background:var(--paper-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--gold-deep);flex:0 0 26px}
+  .sesscard .dirico svg{width:14px;height:14px}
+  .sesscard .dir{font-size:13px;font-weight:700;font-family:var(--mono)}
+  .sesscard .met{font-size:11px;color:var(--ink-3);margin-top:1px}
+  .sesscard .met b{color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .sesscard .sz{margin-left:auto;text-align:right}
+  .sesscard .sz .mb{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+  .sesscard .sz .st{font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+  .sesscard .sz .st.live{color:var(--good)}
+  .sesscard .sz .st.idle{color:var(--ink-3)}
+  .rsbar{height:5px;border-radius:4px;background:var(--paper-3);margin:11px 0;overflow:hidden}
+  .rsbar span{display:block;height:100%;background:var(--gold-deep);border-radius:4px;opacity:.7}
+  .sessacts{display:flex;gap:8px}
+  .sessacts button{flex:1;appearance:none;cursor:pointer;font-family:var(--font);font-size:11.5px;font-weight:700;padding:8px;border-radius:8px;border:1px solid var(--line-2);background:var(--paper);color:var(--ink-2);display:flex;align-items:center;justify-content:center;gap:5px}
+  .sessacts button svg{width:12px;height:12px}
+  .sessacts button.free:hover{border-color:var(--crit);color:var(--crit)}
+  .sessacts button.resume:hover{border-color:var(--good);color:var(--good)}
+  .sessacts button.reveal:hover{border-color:var(--gold);color:var(--gold-deep)}
+  .safe{font-size:10.5px;color:var(--ink-3);margin-top:9px;display:flex;align-items:center;gap:6px}
+  .safe svg{width:12px;height:12px;color:var(--good)}
+
+  .interrupted{margin-top:6px;background:var(--paper-2);border:1px dashed var(--line-2);border-radius:var(--radius-sm);padding:13px 14px}
+  .interrupted .ih{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-bottom:10px}
+  .interrupted .ih svg{width:14px;height:14px;color:var(--warn)}
+  .istrip{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12px;color:var(--ink-2);border-top:1px solid var(--line)}
+  .istrip:first-of-type{border-top:none}
+  .istrip .idir{font-family:var(--mono);font-weight:600}
+  .istrip .iage{color:var(--ink-3);font-size:11px}
+  .istrip button{margin-left:auto;appearance:none;cursor:pointer;font-family:var(--font);font-size:11px;font-weight:700;padding:5px 11px;border-radius:7px;border:1px solid var(--line-2);background:var(--paper);color:var(--ink-2)}
+  .istrip button:hover{border-color:var(--good);color:var(--good)}
+
+  /* foot note */
+  .foot{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-3);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .foot b{color:var(--ink-2)}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);font-size:13px;font-weight:600;padding:12px 20px;border-radius:11px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:50;display:flex;align-items:center;gap:9px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast .sq{width:8px;height:8px;border-radius:2px;background:var(--gold)}
+
+  /* ============================================================= */
+  /* CROSS-CUTTING SESSIONS RAIL (every mode)                       */
+  /* ============================================================= */
+  .sessrail{
+    flex:0 0 168px;background:var(--paper-3);border-right:1px solid var(--line-2);
+    display:flex;flex-direction:column;min-height:0
+  }
+  .sessrail.onright{border-right:none;border-left:1px solid var(--line-2);order:9}
+  .sessrail .srhead{
+    display:flex;align-items:center;gap:6px;padding:9px 11px 7px;
+    font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700
+  }
+  .sessrail .srhead .flame{width:11px;height:11px;flex:0 0 11px;color:var(--gold-deep)}
+  .sessrail .drag{
+    margin:0 9px 8px;display:flex;align-items:center;justify-content:center;gap:6px;
+    font-size:9.5px;color:var(--ink-3);border:1px dashed var(--line-2);border-radius:7px;
+    padding:4px 6px;background:var(--paper-2);font-weight:600;letter-spacing:.02em
+  }
+  .sessrail .drag svg{width:11px;height:11px;opacity:.8}
+  .sessrail .chips{flex:1;overflow:hidden;padding:0 8px;display:flex;flex-direction:column;gap:5px}
+  .schip{
+    display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;
+    background:var(--paper);border:1px solid var(--line);cursor:default
+  }
+  .schip.on{box-shadow:inset 2px 0 0 var(--gold);border-color:var(--line-2)}
+  .schip .flame{width:13px;height:13px;flex:0 0 13px;color:var(--gold-deep)}
+  .schip .sn{font-size:11px;font-weight:600;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+  .schip .sd{width:7px;height:7px;border-radius:50%;background:var(--ink-3);opacity:.4;flex:0 0 7px}
+  .schip .sd.live{background:var(--good);opacity:1}
+  .schip .sd.warn{background:var(--warn);opacity:1}
+  .sessrail .srfoot{font-size:9px;color:var(--ink-3);padding:8px 11px;border-top:1px solid var(--line);line-height:1.4}
+
+  /* ============================================================= */
+  /* OPTIMIZER 3-STATE TOGGLE (switcher strip)                     */
+  /* ============================================================= */
+  .optstrip{
+    display:flex;align-items:center;gap:14px;margin:16px 0 0;padding:13px 16px;
+    background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);flex-wrap:wrap
+  }
+  .optstrip .ol{font-size:12.5px;color:var(--ink-2);flex:1;min-width:230px}
+  .optstrip .ol b{color:var(--ink);font-weight:700}
+  .optstrip .ol .cap{display:block;font-size:11px;color:var(--ink-3);margin-top:2px}
+  .seg3{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;background:var(--paper);overflow:hidden;flex:0 0 auto}
+  .seg3 button{
+    appearance:none;border:none;background:transparent;cursor:pointer;font-family:var(--font);
+    font-size:12px;font-weight:700;color:var(--ink-2);padding:8px 16px;display:flex;align-items:center;gap:6px;
+    border-right:1px solid var(--line-2);transition:.15s
+  }
+  .seg3 button:last-child{border-right:none}
+  .seg3 button .od{width:7px;height:7px;border-radius:50%;background:var(--line-2)}
+  .seg3 button:hover{background:var(--paper-2);color:var(--ink)}
+  .seg3 button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+  .seg3 button[aria-pressed="true"] .od{background:var(--gold)}
+  .seg3 button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+
+  /* ============================================================= */
+  /* CATE — EMBER DARK THEME (this screen only)                     */
+  /* ============================================================= */
+  .cate{
+    --c-bg:#1b1916;          /* warm near-black charcoal */
+    --c-bg-2:#232019;        /* panel */
+    --c-bg-3:#2b271f;        /* raised */
+    --c-ink:#ece4d4;         /* warm off-white */
+    --c-ink-2:#b8af9d;       /* muted */
+    --c-ink-3:#857d6e;       /* faint */
+    --c-line:#37322a;
+    --c-line-2:#46402f;
+    --c-orange:#e0683c;      /* brand orange accent */
+    --c-orange-soft:#7a3a22;
+    --c-green:#7fbf76;       /* context meter + ticks */
+    border:1px solid var(--c-line-2);border-radius:var(--radius);overflow:hidden;
+    background:var(--c-bg);box-shadow:var(--shadow);display:flex;flex-direction:column;height:592px;color:var(--c-ink)
+  }
+  .cate .c-titlebar{display:flex;align-items:center;gap:12px;height:38px;flex:0 0 38px;background:var(--c-bg-2);border-bottom:1px solid var(--c-line);padding:0 12px}
+  .cate .c-titlebar .traffic i.r{background:#E0857C}
+  .cate .c-wordmark{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--c-orange)}
+  .cate .c-wordmark .flame{width:14px;height:14px;color:var(--c-orange)}
+  .cate .c-gitbranch{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--c-ink-3)}
+  .cate .c-gitbranch svg{width:13px;height:13px}
+
+  /* session TOP TABS */
+  .cate .c-sessiontabs{display:flex;align-items:center;gap:4px;height:34px;flex:0 0 34px;background:var(--c-bg-2);border-bottom:1px solid var(--c-line);padding:0 8px;overflow:hidden}
+  .cate .c-stab{display:flex;align-items:center;gap:7px;height:25px;padding:0 11px;border-radius:7px;font-size:11.5px;color:var(--c-ink-3);white-space:nowrap}
+  .cate .c-stab .flame{width:11px;height:11px;color:var(--c-orange);opacity:.7}
+  .cate .c-stab.on{background:var(--c-bg-3);color:var(--c-ink);font-weight:600}
+  .cate .c-stab.on .flame{opacity:1}
+  .cate .c-stab .x{opacity:.4;font-size:12px}
+  .cate .c-stabadd{display:flex;align-items:center;gap:9px;margin-left:6px;color:var(--c-ink-3);font-size:14px}
+  .cate .c-stabadd span{cursor:default}
+
+  .cate .c-body{flex:1;display:flex;min-height:0}
+
+  /* far-left thin activity rail */
+  .cate .c-rail{flex:0 0 46px;background:var(--c-bg-2);border-right:1px solid var(--c-line);display:flex;flex-direction:column;align-items:center;padding:9px 0}
+  .cate .c-rail .ri{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--c-ink-3);margin-bottom:3px;position:relative}
+  .cate .c-rail .ri svg{width:17px;height:17px}
+  .cate .c-rail .ri.on{color:var(--c-ink)}
+  .cate .c-rail .ri.on::before{content:"";position:absolute;left:-9px;top:6px;bottom:6px;width:2px;border-radius:2px;background:var(--c-orange)}
+  .cate .c-rail .spacer{flex:1}
+
+  /* left Workspace + Sessions list */
+  .cate .c-side{flex:0 0 218px;background:var(--c-bg-2);border-right:1px solid var(--c-line);display:flex;flex-direction:column;min-height:0}
+  .cate .c-side .wshead{display:flex;align-items:center;gap:7px;padding:11px 13px 7px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--c-ink-3);font-weight:700}
+  .cate .c-side .wshead .plus{margin-left:auto;color:var(--c-ink-3);font-size:15px;line-height:1}
+  .cate .c-side .wsfolder{display:flex;align-items:center;gap:8px;padding:5px 13px;font-size:12px;color:var(--c-ink-2);font-weight:600}
+  .cate .c-side .wsfolder svg{width:13px;height:13px;color:var(--c-ink-3)}
+  .cate .c-side .c-drag{display:flex;align-items:center;gap:7px;margin:5px 11px 6px;padding:5px 9px;border:1px dashed var(--c-line-2);border-radius:7px;font-size:10px;letter-spacing:.04em;color:var(--c-ink-3);cursor:grab}
+  .cate .c-side .c-drag svg{width:11px;height:11px;opacity:.8}
+  .cate .c-slist{flex:1;overflow:hidden;padding:4px 8px}
+  .cate .c-srow{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;cursor:default;margin-bottom:2px}
+  .cate .c-srow .flame{width:14px;height:14px;flex:0 0 14px;color:var(--c-orange)}
+  .cate .c-srow .nm{font-size:12.5px;color:var(--c-ink-2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cate .c-srow .dot{width:8px;height:8px;border-radius:50%;background:var(--c-ink-3);opacity:.4;flex:0 0 8px}
+  .cate .c-srow .dot.live{background:var(--c-orange);opacity:1;box-shadow:0 0 0 3px rgba(224,104,60,.16)}
+  .cate .c-srow .dot.unread{background:var(--c-orange);opacity:1}
+  .cate .c-srow.on{background:var(--c-bg-3)}
+  .cate .c-srow.on .nm{color:var(--c-ink);font-weight:600}
+
+  /* center conversation */
+  .cate .c-conv{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--c-bg)}
+  .cate .c-convscroll{flex:1;overflow:hidden;padding:16px 20px;display:flex;flex-direction:column;gap:13px;font-size:12.5px;line-height:1.55}
+  .cate .c-umsg{align-self:flex-end;max-width:78%;background:var(--c-bg-3);border:1px solid var(--c-line-2);color:var(--c-ink);padding:9px 13px;border-radius:12px;border-bottom-right-radius:4px}
+  .cate .c-amsg{max-width:88%;color:var(--c-ink-2)}
+  .cate .c-amsg .who{display:flex;align-items:center;gap:6px;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--c-orange);font-weight:800;margin-bottom:6px}
+  .cate .c-amsg .who .flame{width:11px;height:11px}
+  .cate .c-amsg p{margin:0 0 8px}
+  .cate .c-amsg code{font-family:var(--mono);font-size:11px;background:var(--c-bg-2);border:1px solid var(--c-line);padding:1px 5px;border-radius:5px;color:var(--c-ink)}
+  .cate .c-tool{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;color:var(--c-ink-3);background:var(--c-bg-2);border:1px solid var(--c-line);border-radius:8px;padding:6px 11px;margin:0 0 7px}
+  .cate .c-tool .car{color:var(--c-ink-3);opacity:.7}
+  .cate .c-tool .tk{color:var(--c-ink-2)}
+  .cate .c-tool .ok{color:var(--c-green)}
+  .cate .c-tool .run{color:var(--c-orange)}
+  .cate .c-thumbs{display:flex;gap:8px;margin:2px 0 8px}
+  .cate .c-thumbs .th{width:74px;height:48px;border-radius:7px;border:1px solid var(--c-line-2);background:linear-gradient(135deg,var(--c-bg-3),var(--c-orange-soft))}
+  .cate .c-thumbs .th:nth-child(2){background:linear-gradient(135deg,var(--c-bg-3),#33402a)}
+  .cate .c-thumbs .th:nth-child(3){background:linear-gradient(135deg,var(--c-bg-3),#2a3340)}
+  .cate .c-composer{flex:0 0 auto;margin:0 16px 14px;border:1px solid var(--c-line-2);background:var(--c-bg-2);border-radius:11px;padding:10px 13px;display:flex;align-items:center;gap:9px;font-size:12px;color:var(--c-ink-3)}
+  .cate .c-composer .send{margin-left:auto;width:24px;height:24px;border-radius:7px;background:var(--c-orange);display:flex;align-items:center;justify-content:center;color:#1b1410}
+
+  /* signature rich status bar */
+  .cate .c-status{flex:0 0 auto;background:var(--c-bg-2);border-top:1px solid var(--c-line);font-size:10.5px;color:var(--c-ink-2);padding:7px 12px;display:flex;flex-direction:column;gap:5px}
+  .cate .c-status .row{display:flex;align-items:center;gap:0;flex-wrap:wrap}
+  .cate .c-status .seg{display:flex;align-items:center;gap:6px;padding:0 10px;border-right:1px solid var(--c-line);white-space:nowrap}
+  .cate .c-status .seg:first-child{padding-left:0}
+  .cate .c-status .seg:last-child{border-right:none}
+  .cate .c-status .model{color:var(--c-orange);font-weight:700;font-family:var(--mono)}
+  .cate .c-status .ctxmeter{display:inline-flex;width:62px;height:7px;border-radius:4px;background:var(--c-bg-3);overflow:hidden;border:1px solid var(--c-line)}
+  .cate .c-status .ctxmeter i{display:block;height:100%;background:var(--c-green);border-radius:4px}
+  .cate .c-status .mono{font-family:var(--mono)}
+  .cate .c-status .cost{color:var(--c-ink);font-weight:700;font-family:var(--mono)}
+  .cate .c-status .ok{color:var(--c-green)}
+  .cate .c-status .auto{color:var(--c-orange);font-weight:600}
+  .cate .c-status .right{margin-left:auto;color:var(--c-ink-3);font-family:var(--mono)}
+  .cate .c-status .tiny{color:var(--c-ink-3);font-size:10px}
+
+  /* ============================================================= */
+  /* MODE DETAIL PANEL (collapsible, one per mode screen)           */
+  /* ============================================================= */
+  .detail{
+    margin:14px 2px 0;border:1px solid var(--line-2);border-radius:var(--radius);
+    background:var(--editor-bg);box-shadow:var(--shadow-sm);overflow:hidden
+  }
+  .detail > summary{
+    list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;
+    padding:14px 18px;background:var(--paper-2);user-select:none;transition:.15s
+  }
+  .detail > summary::-webkit-details-marker{display:none}
+  .detail > summary:hover{background:var(--paper-3)}
+  .detail > summary:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+  .detail > summary .dchev{
+    width:18px;height:18px;flex:0 0 18px;color:var(--gold-deep);transition:transform .2s ease
+  }
+  .detail[open] > summary .dchev{transform:rotate(90deg)}
+  .detail > summary .dtitle{font-size:13.5px;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
+  .detail > summary .dtitle .acc{color:var(--gold-deep)}
+  .detail > summary .dwhat{font-size:11.5px;color:var(--ink-3);font-weight:500}
+  .detail > summary .dmeta{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .detail > summary .src{font-size:10px;letter-spacing:.04em;color:var(--ink-3);font-style:italic;white-space:nowrap}
+  .detail > summary .opencue{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);font-weight:800}
+  .detail[open] > summary .opencue::after{content:" — collapse"}
+  .detail:not([open]) > summary .opencue::after{content:" — expand"}
+
+  .detail .dbody{padding:4px 18px 18px}
+  .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+  @media(max-width:820px){.dgrid{grid-template-columns:1fr}}
+  .dpart{display:flex;flex-direction:column;gap:8px}
+  .dpart.span2{grid-column:1 / -1}
+  .dpart .ph{display:flex;align-items:center;gap:8px}
+  .dpart .ph .pi{
+    width:22px;height:22px;flex:0 0 22px;border-radius:6px;background:var(--paper-2);
+    border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;color:var(--gold-deep)
+  }
+  .dpart .ph .pi svg{width:13px;height:13px}
+  .dpart .ph h4{margin:0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);font-weight:800}
+  .dpart .ph .rich{
+    margin-left:auto;font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;
+    color:var(--gold-deep);background:var(--gold-soft);padding:2px 7px;border-radius:999px
+  }
+  .dpart p.lead{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+  .dpart ul{margin:2px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .dpart ul li{position:relative;padding-left:17px;font-size:12px;color:var(--ink-2);line-height:1.5}
+  .dpart ul li::before{
+    content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:2px;
+    background:var(--gold);opacity:.85
+  }
+  .dpart ul.good li::before{background:var(--good);border-radius:50%}
+  .dpart ul li b{color:var(--ink);font-weight:700}
+  .dpart code{font-family:var(--mono);font-size:11px;background:var(--paper-3);padding:1px 5px;border-radius:5px;color:var(--ink)}
+  .dpart .cite{font-size:10.5px;color:var(--ink-3);font-style:italic;margin-top:2px}
+
+  /* extensions banner — load-bearing promise, made prominent */
+  .extns{
+    grid-column:1 / -1;margin-top:2px;display:flex;align-items:flex-start;gap:13px;
+    padding:14px 16px;border-radius:var(--radius-sm);
+    background:linear-gradient(90deg,rgba(94,140,106,.14),rgba(94,140,106,.04));
+    border:1px solid var(--good)
+  }
+  .extns .echk{
+    flex:0 0 30px;width:30px;height:30px;border-radius:8px;background:var(--good);
+    display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 12px -5px rgba(94,140,106,.8)
+  }
+  .extns .echk svg{width:17px;height:17px}
+  .extns .ec{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+  .extns .ec .etitle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink);font-weight:800;margin-bottom:3px}
+  .extns .ec .etitle .full{color:#fff;background:var(--good);font-weight:800;font-size:11px;letter-spacing:.03em;text-transform:uppercase;padding:2px 9px;border-radius:999px}
+  .extns .ec b{color:var(--ink);font-weight:700}
+  .extns .ec .pills{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 2px}
+  .extns .ec .pills .xp{
+    font-size:10.5px;font-weight:700;color:var(--good);background:rgba(118,181,131,.14);
+    border:1px solid rgba(118,181,131,.4);padding:3px 9px;border-radius:999px;display:flex;align-items:center;gap:5px
+  }
+  .extns .ec .pills .xp .pd{width:6px;height:6px;border-radius:50%;background:var(--good)}
+  .extns .ec .edge{display:block;margin-top:7px;font-size:11.5px;color:var(--ink-3)}
+  .extns .ec .edge b{color:var(--gold-deep)}
+  .extns .ec .edge.limit b{color:var(--crit)}
+
+  /* Cate detail panel = ember-skinned (matches its mode screen) */
+  .detail.ember{background:#201d18;border-color:#46402f}
+  .detail.ember > summary{background:#262219}
+  .detail.ember > summary:hover{background:#2b271f}
+  .detail.ember > summary .dchev{color:#e0683c}
+  .detail.ember > summary .dtitle{color:#ece4d4}
+  .detail.ember > summary .dtitle .acc{color:#e0683c}
+  .detail.ember > summary .dwhat{color:#857d6e}
+  .detail.ember > summary .src{color:#857d6e}
+  .detail.ember > summary .opencue{color:#e0683c}
+  .detail.ember .dpart .ph .pi{background:#2b271f;border-color:#46402f;color:#e0683c}
+  .detail.ember .dpart .ph h4{color:#ece4d4}
+  .detail.ember .dpart .ph .rich{color:#e0683c;background:rgba(224,104,60,.16)}
+  .detail.ember .dpart p.lead,.detail.ember .dpart ul li{color:#b8af9d}
+  .detail.ember .dpart ul li b{color:#ece4d4}
+  .detail.ember .dpart ul li::before{background:#e0683c}
+  .detail.ember .dpart ul.good li::before{background:#7fbf76}
+  .detail.ember .dpart code{background:#2b271f;border:1px solid #37322a;color:#ece4d4}
+  .detail.ember .dpart .cite{color:#857d6e}
+  .detail.ember .extns{background:linear-gradient(90deg,rgba(127,191,118,.12),rgba(127,191,118,.03));border-color:#7fbf76}
+  .detail.ember .extns .ec{color:#b8af9d}
+  .detail.ember .extns .ec .etitle{color:#ece4d4}
+  .detail.ember .extns .ec .etitle .full{color:#7fbf76}
+  .detail.ember .extns .ec b{color:#ece4d4}
+  .detail.ember .extns .ec .pills .xp{color:#7fbf76;background:rgba(127,191,118,.12);border-color:rgba(127,191,118,.4)}
+  .detail.ember .extns .ec .edge{color:#857d6e}
+  .detail.ember .extns .ec .edge b{color:#e0683c}
+  .detail.ember .extns .ec .edge.limit b{color:#d2786c}
+
+  /* ============================================================= */
+  /* PERSISTENT EXTENSION-GUARANTEE BADGE (footer, all modes)       */
+  /* ============================================================= */
+  .extbadge{
+    position:sticky;bottom:14px;z-index:30;margin:22px auto 0;max-width:max-content;
+    display:flex;align-items:center;gap:11px;padding:9px 16px 9px 11px;border-radius:999px;
+    background:var(--ink);color:var(--paper);box-shadow:0 10px 30px -10px rgba(32,32,30,.55),0 2px 8px -3px rgba(32,32,30,.4)
+  }
+  .extbadge .eb-ic{
+    flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:var(--good);
+    display:flex;align-items:center;justify-content:center;color:#fff
+  }
+  .extbadge .eb-ic svg{width:15px;height:15px}
+  .extbadge .eb-t{font-size:12px;line-height:1.35}
+  .extbadge .eb-t b{color:var(--gold-soft);font-weight:800}
+  .extbadge .eb-t .sub{display:block;font-size:10.5px;color:rgba(246,242,233,.62)}
+  @media(max-width:560px){.extbadge .eb-t .sub{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== TOP ===== -->
+  <div class="topline">
+    <div class="brandblock">
+      <span class="kicker"><span class="dot"></span> Ursula IDE · Modes System</span>
+      <h1 class="title">Ursula — <em>Visual Plan</em></h1>
+      <p class="sub">A clickable preview of the five-mode workbench and RAM Guard, before we build it. One room you choose to walk into — never auto-switched. A movable vertical Sessions rail rides in every mode.</p>
+    </div>
+    <div class="mocktag">Mockup · <b>not the live app</b></div>
+  </div>
+
+  <!-- ===== SCREEN TABS ===== -->
+  <nav class="tabs" role="tablist" aria-label="Mockup screens">
+    <button role="tab" aria-selected="true" data-screen="switcher"><span class="ix">01</span> Switcher</button>
+    <button role="tab" aria-selected="false" data-screen="terax"><span class="ix">02</span> Terax</button>
+    <button role="tab" aria-selected="false" data-screen="warp"><span class="ix">03</span> Warp</button>
+    <button role="tab" aria-selected="false" data-screen="cursor"><span class="ix">04</span> Cursor</button>
+    <button role="tab" aria-selected="false" data-screen="cate"><span class="ix">05</span> Cate</button>
+    <button role="tab" aria-selected="false" class="hero-tab" data-screen="lite"><span class="ix">06</span> Lite / Optimizer</button>
+    <button role="tab" aria-selected="false" data-screen="guard"><span class="ix">07</span> RAM Guard</button>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 1 — SWITCHER                                          -->
+  <!-- ============================================================ -->
+  <section class="screen active" id="screen-switcher" role="tabpanel">
+    <div class="screenhead">
+      <h2><span class="pre">Cmd+K M</span> Switch mode</h2>
+      <p>Four modes, each a profile you walk into. The gold badge points at the one tuned to this Mac — advisory only, it never switches for you.</p>
+    </div>
+
+    <div class="hwbanner">
+      <span class="rad"></span>
+      <span class="lbl">Detected</span>
+      <span class="val"><em>18 GB</em> RAM · Apple <em>M3 Pro</em> GPU · unified (shared) memory</span>
+      <span class="verdict">Recommendation lands on <b>Terax</b> — capable machine</span>
+    </div>
+
+    <div class="cardgrid">
+      <!-- TERAX (recommended) -->
+      <div class="modecard reco" tabindex="0" data-go="terax">
+        <span class="badge">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.2 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 20.2l1.4-6.7-5-4.6 6.8-.7z"/></svg>
+          Recommended for your Mac
+        </span>
+        <div class="mc-top">
+          <div class="mname">TERAX</div>
+          <div class="glyphbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></div>
+        </div>
+        <p class="mtag">Small, fast, good — a bare canvas that respects your attention.</p>
+        <div class="ram">
+          <div class="rlbl"><span>RAM cost</span><b>Low</b></div>
+          <div class="meter"><span style="width:34%"></span></div>
+        </div>
+        <div class="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 6"/></svg> Tap to preview</div>
+      </div>
+
+      <!-- WARP -->
+      <div class="modecard" tabindex="0" data-go="warp">
+        <div class="mc-top">
+          <div class="mname">WARP</div>
+          <div class="glyphbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l4 4-4 4"/><path d="M12 17h8"/></svg></div>
+        </div>
+        <p class="mtag">Terminal turned up to 11 — maximized panel, gold command blocks, block-nav.</p>
+        <div class="ram">
+          <div class="rlbl"><span>RAM cost</span><b>Low</b></div>
+          <div class="meter"><span style="width:36%"></span></div>
+        </div>
+        <div class="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 6"/></svg> Tap to preview</div>
+      </div>
+
+      <!-- CURSOR -->
+      <div class="modecard" tabindex="0" data-go="cursor">
+        <div class="mc-top">
+          <div class="mname">CURSOR</div>
+          <div class="glyphbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 8-6 2-2 6z"/></svg></div>
+        </div>
+        <p class="mtag">AI on your right — the layout you already know, simpler, with chat open.</p>
+        <div class="ram">
+          <div class="rlbl"><span>RAM cost</span><b>Medium</b></div>
+          <div class="meter"><span style="width:66%"></span></div>
+        </div>
+        <div class="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 6"/></svg> Tap to preview</div>
+      </div>
+
+      <!-- CATE -->
+      <div class="modecard" tabindex="0" data-go="cate">
+        <div class="mc-top">
+          <div class="mname">CATE</div>
+          <div class="glyphbox" style="color:#C2762F"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg></div>
+        </div>
+        <p class="mtag">Your sessions, front and center — a warm-dark replica of Drey's daily-driver Cate, sessions as first-class citizens.</p>
+        <div class="ram">
+          <div class="rlbl"><span>RAM cost</span><b>Baseline</b></div>
+          <div class="meter"><span style="width:60%"></span></div>
+        </div>
+        <div class="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 6"/></svg> Tap to preview</div>
+      </div>
+
+      <!-- LITE / OPTIMIZER -->
+      <div class="modecard" tabindex="0" data-go="lite">
+        <div class="mc-top">
+          <div class="mname">LITE <span class="hero-pin">hero</span></div>
+          <div class="glyphbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></div>
+        </div>
+        <p class="mtag">Tunes itself to your Mac — the most aggressive RAM/VRAM preset, so any machine flies.</p>
+        <div class="ram">
+          <div class="rlbl"><span>RAM cost</span><b>Lowest</b></div>
+          <div class="meter"><span style="width:22%"></span></div>
+        </div>
+        <div class="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 6"/></svg> Tap to preview</div>
+      </div>
+    </div>
+
+    <div class="defrow">
+      Not sure? You can always
+      <button data-go="terax">↩ Default — back to baseline</button>
+      <span>· The sixth Quick Pick entry, kept small so the five real modes read as the choice.</span>
+    </div>
+
+    <!-- OPTIMIZER 3-STATE TOGGLE -->
+    <div class="optstrip">
+      <div class="ol">
+        <b>Optimizer</b> — <code style="font-family:var(--mono);font-size:11px">ursula.optimizer.mode</code>
+        <span class="cap">Pick your own adventure — advise me, or auto-tune weak machines.</span>
+      </div>
+      <div class="seg3" role="group" aria-label="Optimizer mode">
+        <button aria-pressed="true" data-opt="recommend" data-toast="Optimizer: Recommend — advisory badge + Optimize now, nothing applies until you click"><span class="od"></span>Recommend</button>
+        <button aria-pressed="false" data-opt="auto" data-toast="Optimizer: Auto — applies Lite once on a weak machine, never fights a manual switch"><span class="od"></span>Auto</button>
+        <button aria-pressed="false" data-opt="off" data-toast="Optimizer: Off — no badge, no verdict, no auto-switch"><span class="od"></span>Off</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="chip"><span class="sq"></span> Badge = <b>getRecommendedMode()</b> · weak Mac → Lite, capable → Terax</span>
+      <span class="chip"><span class="sq"></span> Click never auto-switches · <b>upsert-guarded</b> profiles (no duplicates)</span>
+      <span class="chip"><span class="sq"></span> Optimizer toggle gated <b>off in the Agents window</b></span>
+      <span class="chip"><span class="sq"></span> A movable vertical <b>Sessions rail</b> rides in all five modes</span>
+    </div>
+
+    <div class="specflag">
+      <span class="qm">?</span>
+      <span class="ft">
+        <span class="tag">Open spec question — decide before coding getRecommendedMode()</span>
+        Apple Silicon is <b>unified (integrated) memory</b>. The draft rule returns <code>'lite'</code> for an integrated / weak GPU — which would point this 18 GB M3 Pro at <b>Lite</b>, not Terax. Either the verdict here is wrong, or <code>getRecommendedMode()</code> needs an <b>Apple-Silicon exception</b> (treat unified memory as capable above a RAM threshold). This mockup shows the <i>capable → Terax</i> intent; the logic must match it on purpose, not by accident.
+      </span>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 2 — TERAX                                             -->
+  <!-- ============================================================ -->
+  <section class="screen" id="screen-terax" role="tabpanel">
+    <div class="screenhead">
+      <h2><span class="pre">02</span> Terax — bare canvas</h2>
+      <p>Activity bar hidden. Tabs collapse to a single anchor. No command center, no breadcrumbs, no minimap. Calm tree, reduced motion, one terminal. The minimal floor Warp and Lite build on.</p>
+    </div>
+
+    <div class="ide">
+      <div class="titlebar">
+        <div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <div class="menubar compact"><span>Ursula</span><span>File</span><span>Go</span><span>···</span></div>
+        <!-- no command center, no layout controls -->
+      </div>
+      <div class="ide-body">
+        <!-- activity bar HIDDEN · Sessions rail still rides on the left -->
+        <div class="sessrail">
+          <div class="srhead"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg> Sessions</div>
+          <div class="drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg> drag to move ⇄</div>
+          <div class="chips">
+            <div class="schip on"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">g3ac</span><span class="sd live"></span></div>
+            <div class="schip"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">finance</span><span class="sd live"></span></div>
+            <div class="schip"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">booking-tool</span><span class="sd"></span></div>
+          </div>
+          <div class="srfoot">Editor tabs stay native; the Sessions rail is the movable vertical surface.</div>
+        </div>
+        <div class="sidebar">
+          <div class="sbhead">Explorer</div>
+          <div class="tree">
+            <div class="row"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4v16h16V7h-9z"/></svg> g3ac-underwriting</div>
+            <div class="row indent"><span class="fdot"></span> README.md</div>
+            <div class="row indent active"><span class="fdot"></span> intake.ts</div>
+            <div class="row indent"><span class="fdot"></span> scoring.ts</div>
+            <div class="row indent"><span class="fdot"></span> schema.ts</div>
+            <div class="row"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4v16h16V7h-9z"/></svg> tests</div>
+          </div>
+        </div>
+        <div class="main">
+          <!-- single anchor instead of tab strip -->
+          <div class="tabstrip">
+            <div class="single-anchor"><span class="glyph"></span> intake.ts <span class="meta">— single anchor</span></div>
+          </div>
+          <!-- no breadcrumbs -->
+          <div class="editor">
+            <div class="gutter"><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div></div>
+            <div class="code">
+              <span class="ln"><span class="cm">// intake — quiet by design</span></span>
+              <span class="ln"><span class="kw">import</span> { z } <span class="kw">from</span> <span class="st">"zod"</span>;</span>
+              <span class="ln"> </span>
+              <span class="ln"><span class="kw">export const</span> <span class="nm">Applicant</span> = z.<span class="fn">object</span>({</span>
+              <span class="ln">  name: z.<span class="fn">string</span>().<span class="fn">min</span>(1),</span>
+              <span class="ln">  revenue: z.<span class="fn">number</span>().<span class="fn">positive</span>(),</span>
+              <span class="ln">  state: z.<span class="fn">enum</span>([<span class="st">"FL"</span>, <span class="st">"GA"</span>]),</span>
+              <span class="ln">});</span>
+            </div>
+            <!-- minimap OFF -->
+          </div>
+          <div class="panel tall">
+            <div class="panel-tabs"><span class="pt on">zsh</span><span class="pt">output</span><span class="grow"></span></div>
+            <div class="term">
+              <span class="l"><span class="prompt">ursula</span> <span class="path">~/g3ac-underwriting</span> $ npm run dev</span>
+              <span class="l ok">  ✓ ready in 412ms · http://localhost:3000</span>
+              <span class="l"><span class="prompt">ursula</span> <span class="path">~/g3ac-underwriting</span> $ <span class="cursor"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="statusbar">
+        <div class="pill mode"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h8v6H3zm10 0h8v6h-8zM3 13h8v6H3zm10 0h8v6h-8z"/></svg> Terax</div>
+        <div class="seg">main</div>
+        <div class="seg">UTF-8</div>
+        <div class="pill ram"><span class="ramdot"></span> RAM <b>6.1 GB</b> / 18</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="chip"><span class="sq"></span> <b>activityBar.location = hidden</b></span>
+      <span class="chip"><span class="sq"></span> <b>editor.showTabs = single</b></span>
+      <span class="chip"><span class="sq"></span> commandCenter / breadcrumbs / minimap <b>off</b></span>
+      <span class="chip"><span class="sq"></span> reduceMotion <b>on</b> · indent guides <b>none</b></span>
+    </div>
+
+    <!-- TERAX detail panel -->
+    <details class="detail" open>
+      <summary>
+        <svg class="dchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
+        <span class="dtitle">What <span class="acc">Terax</span> mode is</span>
+        <span class="dwhat">inspired by Terax — the ~7MB all-in-one Agentic Development Environment</span>
+        <span class="dmeta"><span class="src">Apache-2.0 · ~7.2k stars</span><span class="opencue"></span></span>
+      </summary>
+      <div class="dbody">
+        <div class="dgrid">
+
+          <!-- How it works -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+              <h4>How it works</h4>
+            </div>
+            <p class="lead">A light all-in-one surface that fuses terminal, editor, an approval-gated AI agent, a git commit graph, and a web-preview pane into one quiet, fast room. The AI plans, edits via reviewed diffs, and reads a project-memory file (<code>TERAX.md</code>-style) before it acts.</p>
+          </div>
+
+          <!-- Why it's good (rich for Terax) -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.2 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 20.2l1.4-6.7-5-4.6 6.8-.7z"/></svg></span>
+              <h4>Why it's good</h4>
+              <span class="rich">strengths</span>
+            </div>
+            <ul class="good">
+              <li><b>All-in-one without bloat</b> — terminal + editor + AI agent + git graph + web preview on one surface, kept light (Tauri-weight, OS WebView, no bundled Chromium).</li>
+              <li><b>AI is first-class AND safe</b> — every edit is reviewed inline hunk-by-hunk and bash is approval-gated, so the agent can't silently mutate your repo.</li>
+              <li><b>Local-first &amp; private</b> — BYOK or fully offline, no telemetry, keys in the OS keychain, provider-agnostic (never locked to one vendor).</li>
+              <li><b>Fast by architecture</b> — WebGL terminal stays silky at deep scrollback, sub-ms keystrokes, ripgrep search, ~300ms-class cold start.</li>
+              <li><b>Project memory baked in</b> — a <code>TERAX.md</code>-style file + an <code>/init</code> scan means the agent starts every session already understanding the codebase.</li>
+              <li><b>Truly open &amp; maintainable</b> — Apache-2.0, active community; passes the independence bar.</li>
+            </ul>
+          </div>
+
+          <!-- Customize (real knobs) -->
+          <div class="dpart span2">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 01-.6 2.8l2 1.2-2 3.4-2.2-1a7 7 0 01-2.4 1.4L13.4 23h-2.8l-.4-2.2a7 7 0 01-2.4-1.4l-2.2 1-2-3.4 2-1.2A7 7 0 015 12"/></svg></span>
+              <h4>Customize — the real knobs</h4>
+            </div>
+            <ul>
+              <li><b>Themes</b> — pick a bundled UI theme or build a custom one in-app, plus an independent editor theme.</li>
+              <li><b>Background image</b> with opacity + blur sliders.</li>
+              <li><b>Terminal</b> — font family/size (8–32pt), letter spacing, scrollback depth (200–50,000 lines), and a WebGL/GPU render toggle.</li>
+              <li><b>Project memory</b> — a <code>TERAX.md</code>-style file the agent auto-reads, plus an <code>/init</code>-equivalent that scans the workspace and writes the brief.</li>
+              <li><b>Agent personas</b> — user-definable Coder / Architect / Reviewer with scoped tool subsets + global custom instructions.</li>
+              <li><b>Snippets</b> and callable "skills" workflows.</li>
+              <li><b>Vim mode</b> + dotfile import.</li>
+              <li><b>Provider choice</b> — BYOK (OpenAI, Anthropic, Gemini, Groq, Grok, Cerebras, OpenRouter, DeepSeek, Mistral, any OpenAI-compatible endpoint) or fully local via Ollama / LM Studio / MLX.</li>
+              <li><b>Keybinding config file</b> — a real user-editable dotfile <span class="cite">(an Ursula addition — Terax has no documented one; see open question)</span>.</li>
+            </ul>
+          </div>
+
+          <!-- Extensions guarantee -->
+          <div class="extns">
+            <span class="echk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span>
+            <span class="ec">
+              <span class="etitle">Extensions: <span class="full">full access</span></span>
+              This mode is a VS Code <b>Profile</b> sharing Ursula's one installed extension set (<code>useDefaultFlags.extensions=true</code>) — so all of these are available here and <b>never removed on switch</b>:
+              <span class="pills"><span class="xp"><span class="pd"></span>Claude Code</span><span class="xp"><span class="pd"></span>Kilo Code</span><span class="xp"><span class="pd"></span>any Open VSX extension</span></span>
+              <span class="edge"><b>Ursula's edge over real Terax:</b> Terax ships <b>no</b> plugin/extension API at all — Ursula gives you Terax's diff-reviewed, approval-gated, project-memory agent feel PLUS a real extension host on top.</span>
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 3 — WARP                                              -->
+  <!-- ============================================================ -->
+  <section class="screen" id="screen-warp" role="tabpanel">
+    <div class="screenhead">
+      <h2><span class="pre">03</span> Warp — terminal up to 11</h2>
+      <p>Same bare chrome as Terax, but the terminal opens maximized. Every command gets a warm-gold block, exit-code gutter dots, and Cmd+↑ / Cmd+↓ block navigation.</p>
+    </div>
+
+    <div class="ide">
+      <div class="titlebar">
+        <div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <div class="menubar compact"><span>Ursula</span><span>Terminal</span><span>···</span></div>
+      </div>
+      <div class="ide-body">
+        <!-- Sessions rail rides even with the terminal maximized -->
+        <div class="sessrail">
+          <div class="srhead"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg> Sessions</div>
+          <div class="drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg> drag to move ⇄</div>
+          <div class="chips">
+            <div class="schip on"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">g3ac</span><span class="sd live"></span></div>
+            <div class="schip"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">finance</span><span class="sd warn"></span></div>
+            <div class="schip"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">booking-tool</span><span class="sd"></span></div>
+          </div>
+          <div class="srfoot">Editor tabs stay native; the Sessions rail is the movable vertical surface.</div>
+        </div>
+        <div class="main">
+          <!-- terminal MAXIMIZED, fills the body -->
+          <div class="panel max" style="position:relative">
+            <div class="panel-tabs"><span class="pt on">zsh — maximized</span><span class="pt">build</span><span class="grow"></span><span class="pmax">⤢ maximized panel</span></div>
+            <div class="term">
+              <div class="cmdblock">
+                <span class="exit ok"></span>
+                <span class="l cmdline"><span class="prompt">➜</span> <span class="path">g3ac</span> git status</span>
+                <span class="l out">On branch main · nothing to commit, working tree clean</span>
+              </div>
+              <div class="cmdblock">
+                <span class="exit ok"></span>
+                <span class="l cmdline"><span class="prompt">➜</span> <span class="path">g3ac</span> npm test</span>
+                <span class="l out">Test Suites: 12 passed · Tests: 79 passed · Time 3.1s</span>
+              </div>
+              <div class="cmdblock">
+                <span class="exit bad"></span>
+                <span class="l cmdline"><span class="prompt">➜</span> <span class="path">g3ac</span> deploy --prod</span>
+                <span class="l out" style="color:#D2786C">✗ exit 1 · missing env STRIPE_KEY — block flagged red</span>
+              </div>
+              <div class="cmdblock">
+                <span class="exit ok"></span>
+                <span class="l cmdline"><span class="prompt">➜</span> <span class="path">g3ac</span> <span class="cursor"></span></span>
+              </div>
+            </div>
+            <div class="floathint"><kbd>Cmd ↑</kbd> / <kbd>Cmd ↓</kbd> jump between command blocks</div>
+          </div>
+        </div>
+      </div>
+      <div class="statusbar">
+        <div class="pill mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 7l4 4-4 4"/><path d="M12 17h8"/></svg> Warp</div>
+        <div class="seg">main</div>
+        <div class="seg">4 blocks</div>
+        <div class="pill ram"><span class="ramdot"></span> RAM <b>6.4 GB</b> / 18</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="chip"><span class="sq"></span> Inherits <b>BASE_LEAN</b> (all of Terax)</span>
+      <span class="chip"><span class="sq"></span> <b>commandBlocks = true</b> · gold left bar per command</span>
+      <span class="chip"><span class="sq"></span> shellIntegration decorations = <b>gutter</b> dots</span>
+      <span class="chip"><span class="sq"></span> startup: toggle + <b>maximize panel</b></span>
+    </div>
+
+    <!-- WARP detail panel -->
+    <details class="detail" open>
+      <summary>
+        <svg class="dchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
+        <span class="dtitle">What <span class="acc">Warp</span> mode is</span>
+        <span class="dwhat">inspired by Warp — the from-scratch Rust, GPU/Metal AI-native terminal with structured "blocks"</span>
+        <span class="dmeta"><span class="src">blocks · structured-context agent</span><span class="opencue"></span></span>
+      </summary>
+      <div class="dbody">
+        <div class="dgrid">
+
+          <!-- How it works -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+              <h4>How it works</h4>
+            </div>
+            <p class="lead">A block-structured terminal where each command + its output + exit code + timing is one discrete, addressable unit. The input line behaves like a real code editor, and the AI agent reads that structured terminal state to ground its suggestions. MCP servers are the official way to add tools, and reusable Workflows accumulate knowledge in place.</p>
+          </div>
+
+          <!-- Why it's good (rich for Warp) -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.2 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 20.2l1.4-6.7-5-4.6 6.8-.7z"/></svg></span>
+              <h4>Why it's good</h4>
+              <span class="rich">strengths</span>
+            </div>
+            <ul class="good">
+              <li><b>Blocks solve a decades-old pain</b> — scroll to, select, copy, re-run, or share exactly ONE command's output without fishing through interleaved scrollback. One structural decision makes navigation, sharing, and AI context all cleaner.</li>
+              <li><b>The AI gets STRUCTURED context</b> — blocks, branch, exit codes, history, recent I/O — not raw text, so the self-correcting agent is noticeably more accurate than an LLM bolted onto a normal terminal.</li>
+              <li><b>IDE-style input line</b> — click to move the cursor and edit a long command like real text instead of fighting single-line readline.</li>
+              <li><b>Speed is measured</b> — ≈1.9ms average redraw, 144+ FPS, so heavy output still feels instant.</li>
+              <li><b>Knowledge lives where the work happens</b> — Workflows, Notebooks, and prompts stay in the terminal and sync, instead of rotting in a wiki.</li>
+              <li><b>Two clean AI modes</b> — a quiet Terminal mode vs an Agent mode with model selection, autonomy level, and a conversation view; you stay in control of when it acts.</li>
+              <li><b>Sensible defaults, deep file-based config</b> — usable day one, every surface (theme YAML, keybindings, prompt, launch configs, autonomy) editable and shareable as plain files.</li>
+            </ul>
+          </div>
+
+          <!-- Customize (real knobs) -->
+          <div class="dpart span2">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 01-.6 2.8l2 1.2-2 3.4-2.2-1a7 7 0 01-2.4 1.4L13.4 23h-2.8l-.4-2.2a7 7 0 01-2.4-1.4l-2.2 1-2-3.4 2-1.2A7 7 0 015 12"/></svg></span>
+              <h4>Customize — the real knobs</h4>
+            </div>
+            <ul>
+              <li><b>Custom themes as YAML</b> — 16 ANSI colors (normal + bright) plus accent/background/foreground in hex; Base16 supported.</li>
+              <li><b>Remappable keybindings/keysets</b> saved to a keybindings file (Vim/emacs-flavored presets available).</li>
+              <li><b>Prompt</b> — native Warp-style prompt with configurable "prompt chips" OR your own shell PS1 from <code>.zshrc</code>/<code>.bashrc</code>.</li>
+              <li><b>Launch configurations</b> — saved window/tab/pane layouts + startup commands you relaunch as a unit.</li>
+              <li><b>MCP server registration</b> — CLI-based servers Ursula launches/manages, or URL-based via Streamable HTTP/SSE with custom headers + env vars — the extension surface for the agent.</li>
+              <li><b>Reusable Workflows</b> + interactive Notebooks/runbooks + shared prompts (a personal/team knowledge library).</li>
+              <li><b>AI configured independently</b> from appearance — model choice, agent autonomy/permission level, default mode (Terminal vs Agent).</li>
+              <li><b>Warpify-style rules</b> to extend the full experience into subshells/SSH (Docker, Python REPLs, remote sessions).</li>
+              <li><b>Block behavior</b> (the core primitive) and the IDE-style input editor (multi-cursor, click-to-position, syntax highlighting).</li>
+            </ul>
+          </div>
+
+          <!-- Extensions guarantee -->
+          <div class="extns">
+            <span class="echk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span>
+            <span class="ec">
+              <span class="etitle">Extensions: <span class="full">full access</span></span>
+              This mode is a VS Code <b>Profile</b> over Ursula's shared extension set (<code>useDefaultFlags.extensions=true</code>) — these are all present and <b>never stripped on switch</b>:
+              <span class="pills"><span class="xp"><span class="pd"></span>Claude Code</span><span class="xp"><span class="pd"></span>Kilo Code</span><span class="xp"><span class="pd"></span>any Open VSX extension</span></span>
+              <span class="edge"><b>The layering:</b> real Warp has <b>no</b> UI-plugin marketplace — its only "extension" surface is MCP-for-the-agent plus file config. Ursula keeps that MCP surface AND adds a true editor extension host, so you get Warp's blocks and structured-context agent without Warp's terminal-only ceiling.</span>
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 4 — CURSOR                                            -->
+  <!-- ============================================================ -->
+  <section class="screen" id="screen-cursor" role="tabpanel">
+    <div class="screenhead">
+      <h2><span class="pre">04</span> Cursor — AI on your right</h2>
+      <p>The familiar default profile — activity bar, tabs, breadcrumbs, command center all stay. Only two changes: minimap off, Claude agent un-gated. On entry the right panel opens with chat docked.</p>
+    </div>
+
+    <div class="ide">
+      <div class="titlebar">
+        <div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <div class="menubar"><span>Ursula</span><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Run</span></div>
+        <div class="cmdcenter"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> g3ac-underwriting</div>
+        <div class="layoutctl"><i></i><i></i><i></i></div>
+      </div>
+      <div class="ide-body">
+        <!-- activity bar VISIBLE (default profile) -->
+        <div class="activitybar">
+          <div class="ai on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M3 12h18M3 19h18"/></svg></div>
+          <div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+          <div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v12M6 21a3 3 0 100-6 3 3 0 000 6zM18 9a3 3 0 100-6 3 3 0 000 6zM18 9c0 6-12 2-12 6"/></svg></div>
+          <div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 01-.6 2.8l2 1.2-2 3.4-2.2-1a7 7 0 01-2.4 1.4L13.4 23h-2.8l-.4-2.2a7 7 0 01-2.4-1.4l-2.2 1-2-3.4 2-1.2A7 7 0 015 12"/></svg></div>
+        </div>
+        <!-- Sessions rail rides alongside the default layout -->
+        <div class="sessrail">
+          <div class="srhead"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg> Sessions</div>
+          <div class="drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg> drag to move ⇄</div>
+          <div class="chips">
+            <div class="schip on"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">g3ac</span><span class="sd live"></span></div>
+            <div class="schip"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">finance</span><span class="sd live"></span></div>
+            <div class="schip"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">booking-tool</span><span class="sd"></span></div>
+          </div>
+          <div class="srfoot">Editor tabs stay native; the Sessions rail is the movable vertical surface.</div>
+        </div>
+        <div class="sidebar">
+          <div class="sbhead">Explorer</div>
+          <div class="tree">
+            <div class="row"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4v16h16V7h-9z"/></svg> src</div>
+            <div class="row indent"><span class="fdot"></span> intake.ts</div>
+            <div class="row indent active"><span class="fdot"></span> scoring.ts</div>
+            <div class="row indent"><span class="fdot"></span> schema.ts</div>
+            <div class="row indent2"><span class="fdot"></span> utils.ts</div>
+            <div class="row"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4v16h16V7h-9z"/></svg> tests</div>
+          </div>
+        </div>
+        <div class="main">
+          <div class="tabstrip">
+            <div class="etab"><span class="glyph"></span> intake.ts <span class="x">×</span></div>
+            <div class="etab active"><span class="glyph"></span> scoring.ts <span class="x">×</span></div>
+          </div>
+          <div class="breadcrumbs">src <span class="sep">›</span> scoring.ts <span class="sep">›</span> <span style="color:var(--gold-deep)">scoreApplicant()</span></div>
+          <div class="editor">
+            <div class="gutter"><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div></div>
+            <div class="code">
+              <span class="ln"><span class="kw">export function</span> <span class="fn">scoreApplicant</span>(a: <span class="nm">Applicant</span>) {</span>
+              <span class="ln">  <span class="kw">const</span> base = a.revenue / <span class="nm">12_000</span>;</span>
+              <span class="ln">  <span class="kw">const</span> risk = <span class="fn">stateRisk</span>(a.state);</span>
+              <span class="ln">  <span class="kw">return</span> <span class="fn">clamp</span>(base - risk, <span class="nm">0</span>, <span class="nm">100</span>);</span>
+              <span class="ln">}</span>
+            </div>
+            <!-- minimap OFF in cursor mode -->
+          </div>
+        </div>
+        <!-- AUX bar: AI chat docked right -->
+        <div class="auxbar">
+          <div class="auxhead"><span class="gem"></span> Claude — Agent <span class="tag">un-gated</span></div>
+          <div class="chat">
+            <div class="msg user">Add a hard floor so scores never go negative.</div>
+            <div class="msg ai"><div class="who">Claude</div>Already covered — <code>clamp(…, 0, 100)</code> pins the floor at 0. Want me to add a test that feeds a loss-making applicant and asserts <code>= 0</code>?</div>
+            <div class="msg user">Yes, and run it.</div>
+          </div>
+          <div class="chatbox">Ask, edit, or run…
+            <span class="send"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="statusbar">
+        <div class="pill mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 3l14 8-6 2-2 6z"/></svg> Cursor</div>
+        <div class="seg">main</div>
+        <div class="seg">Claude ready</div>
+        <div class="pill ram"><span class="ramdot amber"></span> RAM <b>11.8 GB</b> / 18</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="chip"><span class="sq"></span> Inherits the <b>default profile</b> (familiar layout)</span>
+      <span class="chip"><span class="sq"></span> <b>claudeAgent.enabled = true</b> · minimap off</span>
+      <span class="chip"><span class="sq"></span> startup: <b>openChatToSide</b> on the right</span>
+      <span class="chip"><span class="sq"></span> soft nudge → <b>kilocode.kilo-code</b> (never forced)</span>
+    </div>
+
+    <!-- CURSOR detail panel -->
+    <details class="detail" open>
+      <summary>
+        <svg class="dchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
+        <span class="dtitle">What <span class="acc">Cursor</span> mode is</span>
+        <span class="dwhat">inspired by Cursor — the VS Code fork with editor-level AI sharing one codebase index</span>
+        <span class="dmeta"><span class="src">editor-first · one shared index</span><span class="opencue"></span></span>
+      </summary>
+      <div class="dbody">
+        <div class="dgrid">
+
+          <!-- How it works -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+              <h4>How it works</h4>
+            </div>
+            <p class="lead">An editor-first AI mode where inline edits, next-edit Tab completion, and an agent/composer panel all share ONE syntax-aware codebase index, steered by version-controlled project rules. Indexing is privacy-respecting (embeddings + obfuscated paths only) and model selection is user-controlled.</p>
+          </div>
+
+          <!-- Why it's good -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.2 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 20.2l1.4-6.7-5-4.6 6.8-.7z"/></svg></span>
+              <h4>Why it's good</h4>
+              <span class="rich">strengths</span>
+            </div>
+            <ul class="good">
+              <li><b>AI at the editor level</b>, not an isolated chat sidebar — inline edit, next-edit Tab, and the composer share one index and one context system, so suggestions are repo-aware not file-aware.</li>
+              <li><b>Tab's next-edit prediction</b> — predicting WHERE you'll edit next, not just completing the current line — is a genuinely distinct UX win.</li>
+              <li><b>Near-zero switching cost</b> — imports settings, keybindings, themes, and extensions, so the AI is additive, not a replacement workflow.</li>
+              <li><b>Privacy-respecting indexing</b> — store only embeddings + obfuscated paths, discard plaintext, Merkle-tree incremental re-indexing to stay fast on big repos.</li>
+              <li><b>Rules + MCP</b> give clean, file-based ways to make the AI behave per project and reach external tools.</li>
+              <li><b>Model-agnostic</b> — users aren't locked to one LLM vendor.</li>
+            </ul>
+          </div>
+
+          <!-- Customize -->
+          <div class="dpart span2">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 01-.6 2.8l2 1.2-2 3.4-2.2-1a7 7 0 01-2.4 1.4L13.4 23h-2.8l-.4-2.2a7 7 0 01-2.4-1.4l-2.2 1-2-3.4 2-1.2A7 7 0 015 12"/></svg></span>
+              <h4>Customize — the real knobs</h4>
+            </div>
+            <ul>
+              <li><b>VS Code <code>settings.json</code></b> — imported on first run, fully editable.</li>
+              <li><b>Remappable keybindings</b> with VS Code bindings as the baseline, including AI-specific actions.</li>
+              <li><b>Themes</b> — import VS Code themes directly + install from Open VSX.</li>
+              <li><b>File-based rules</b> mirroring <code>.cursor/rules/*.mdc</code> (glob-scoped, version-controlled) plus a global "Rules for AI" surface.</li>
+              <li><b>@-context symbols</b> — <code>@file</code>, <code>@folder</code>, <code>@Codebase</code>, <code>@Docs</code>, <code>@Web</code>, <code>@Git</code> — to pin precise context into a prompt.</li>
+              <li><b>Per-chat / per-agent model selection</b> (multi-vendor LLM routing).</li>
+              <li><b>MCP server configuration</b> for custom tools/data sources.</li>
+              <li><b>Privacy Mode toggle</b> controlling whether code/embeddings leave the machine.</li>
+            </ul>
+          </div>
+
+          <!-- Extensions guarantee -->
+          <div class="extns">
+            <span class="echk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span>
+            <span class="ec">
+              <span class="etitle">Extensions: <span class="full">full access</span></span>
+              This mode is a VS Code <b>Profile</b> over Ursula's shared extension set (<code>useDefaultFlags.extensions=true</code>) — all available and <b>never removed on mode switch</b>:
+              <span class="pills"><span class="xp"><span class="pd"></span>Claude Code</span><span class="xp"><span class="pd"></span>Kilo Code</span><span class="xp"><span class="pd"></span>any Open VSX extension</span></span>
+              <span class="edge">Ursula keeps Cursor's exact install paths — default the registry to Open VSX AND preserve all three VSIX sideload routes (Install-from-VSIX, drag-drop, <code>--install-extension</code> CLI) — so nothing on Open VSX is ever locked out by the install mechanism.</span>
+              <span class="edge limit"><b>Honest hard limit (same as Cursor's):</b> MS-proprietary extensions (Pylance, official Remote-SSH, the C# debugger) are license-locked to Microsoft products and can't legally run regardless of mode — document open-source equivalents instead.</span>
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 5 — CATE (Ember Dark, sessions front and center)      -->
+  <!-- ============================================================ -->
+  <section class="screen" id="screen-cate" role="tabpanel">
+    <div class="screenhead">
+      <h2><span class="pre">05</span> Cate — your sessions, front and center</h2>
+      <p>A faithful replica of Drey's daily-driver Cate on the VS Code base: warm near-black <b>Ember</b> theme with brand-orange accents, a vertical Sessions rail, session tabs up top, a rich Claude-session conversation, and the signature deep status bar (model · context · MCPs/hooks · cost). Not lean by design — its soul is session visibility.</p>
+    </div>
+
+    <div class="cate">
+      <!-- title bar -->
+      <div class="c-titlebar">
+        <div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <div class="c-wordmark">
+          <svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg>
+          CATE
+        </div>
+        <div class="c-gitbranch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v12M6 21a3 3 0 100-6 3 3 0 000 6zM18 9a3 3 0 100-6 3 3 0 000 6zM18 9c0 6-12 2-12 6"/></svg>
+          main
+        </div>
+      </div>
+
+      <!-- horizontal session tabs -->
+      <div class="c-sessiontabs">
+        <div class="c-stab on"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg> Ursula <span class="x">×</span></div>
+        <div class="c-stab"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg> 1bb launch party <span class="x">×</span></div>
+        <div class="c-stab"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg> Discovery call <span class="x">×</span></div>
+        <div class="c-stabadd"><span>+</span><span>⊟</span></div>
+      </div>
+
+      <div class="c-body">
+        <!-- far-left thin activity rail -->
+        <div class="c-rail">
+          <div class="ri on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+          <div class="spacer"></div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 01-.6 2.8l2 1.2-2 3.4-2.2-1a7 7 0 01-2.4 1.4L13.4 23h-2.8l-.4-2.2a7 7 0 01-2.4-1.4l-2.2 1-2-3.4 2-1.2A7 7 0 015 12"/></svg></div>
+        </div>
+
+        <!-- Workspace + vertical Sessions list -->
+        <div class="c-side">
+          <div class="wshead">Workspace <span class="plus">+</span></div>
+          <div class="wsfolder"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4v16h16V7h-9z"/></svg> Main</div>
+          <div class="c-drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg> drag to move ⇄</div>
+          <div class="c-slist">
+            <div class="c-srow on"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="nm">Ursula</span><span class="dot live"></span></div>
+            <div class="c-srow"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="nm">1bb - launch party</span><span class="dot unread"></span></div>
+            <div class="c-srow"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="nm">Discovery call</span><span class="dot"></span></div>
+            <div class="c-srow"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="nm">GLM / Gemma / Qwen</span><span class="dot"></span></div>
+            <div class="c-srow"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="nm">kate school of bots</span><span class="dot"></span></div>
+          </div>
+        </div>
+
+        <!-- center conversation -->
+        <div class="c-conv">
+          <div class="c-convscroll">
+            <div class="c-umsg">Render the Cate mode screen into the visual plan and match the real Ember theme.</div>
+            <div class="c-amsg">
+              <div class="who"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg> Claude</div>
+              <p>On it. Cate's chrome is the same VS Code base, themed warm-dark with the brand orange (<code>#e0683c</code>) on flame icons and the wordmark. Sessions live both as top tabs and the vertical rail.</p>
+              <div class="c-thumbs"><div class="th"></div><div class="th"></div><div class="th"></div></div>
+              <div class="c-tool"><span class="car">▸</span> <span class="tk">Bash</span>(grep ursula-ember-dark themes/) <span class="ok">done</span></div>
+              <div class="c-tool"><span class="car">▸</span> <span class="tk">Read</span> ×11 <span class="ok">done</span></div>
+              <div class="c-tool"><span class="run">Brewing… 18s</span></div>
+            </div>
+            <div class="c-umsg">Keep real Claude Code running in the terminal exactly as today.</div>
+          </div>
+          <div class="c-composer">Ask, edit, or run…
+            <span class="send"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+
+          <!-- SIGNATURE RICH STATUS BAR -->
+          <div class="c-status">
+            <div class="row">
+              <span class="seg"><span class="model">Opus 4.8 (1M context)</span></span>
+              <span class="seg"><span class="ctxmeter"><i style="width:46%"></i></span> 46%</span>
+              <span class="seg mono">1 CLAUDE.md · 4 rules · 26 MCPs · 9 hooks</span>
+              <span class="seg mono">34h 20m</span>
+              <span class="seg right">128.4k tok</span>
+            </div>
+            <div class="row">
+              <span class="seg mono tiny">Render Cate mode</span>
+              <span class="seg"><span class="cost">$43.66 this chat</span></span>
+              <span class="seg"><span class="cost">$891.21 today</span></span>
+              <span class="seg mono tiny">context 58% left (419k tokens)</span>
+              <span class="seg mono tiny">5h 50% resets 2h29m</span>
+              <span class="seg mono tiny">7day 90% resets 4d 16h</span>
+              <span class="seg right"><span class="auto">auto mode on</span> <span class="tiny">(shift+tab to cycle)</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="chip"><span class="sq"></span> theme <b>Ursula Ember Dark</b> · orange <b>#E0683C</b> accents</span>
+      <span class="chip"><span class="sq"></span> activityBar <b>kept</b> — Sessions rail home, focused on enter</span>
+      <span class="chip"><span class="sq"></span> rich status: model · context% · MCPs · hooks · cost</span>
+      <span class="chip"><span class="sq"></span> sourced from the scan + <b>~/.claude</b> files · omits what it can't source</span>
+    </div>
+
+    <div class="specflag">
+      <span class="qm">?</span>
+      <span class="ft">
+        <span class="tag">Open spec question — confirm before building the status bar</span>
+        The rich readout pulls <b>real</b> values: MCP/hook counts from <code>~/.claude/settings.json</code>, per-chat cost from the session. <b>Live token-reset timers are NOT in local files</b> — render what's sourceable, never fabricate a "resets 2h29m" if it can't be read. Cate version drift is also open: Drey runs <b>v1.1.1</b>, upstream is <b>v1.3.1</b> — lock the "feel" to what he uses daily unless told otherwise.
+      </span>
+    </div>
+
+    <!-- CATE detail panel (ember-skinned to match this mode) -->
+    <details class="detail ember" open>
+      <summary>
+        <svg class="dchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
+        <span class="dtitle">What <span class="acc">Cate</span> mode is</span>
+        <span class="dwhat">inspired by CATE v1.1.1 — the Monaco-based, infinite-canvas, session-centric agent IDE Drey already runs</span>
+        <span class="dmeta"><span class="src">spatial canvas · first-class sessions</span><span class="opencue"></span></span>
+      </summary>
+      <div class="dbody">
+        <div class="dgrid">
+
+          <!-- How it works -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+              <h4>How it works</h4>
+            </div>
+            <p class="lead">A spatial mode where editor, terminal, browser, document, and agent-chat panels float and dock on an infinite zoomable canvas. Each agent run is a first-class restorable session, and a rich status bar turns invisible agent state into a live dashboard. The whole layout + sessions restore per project folder.</p>
+          </div>
+
+          <!-- Why it's good -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.2 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 20.2l1.4-6.7-5-4.6 6.8-.7z"/></svg></span>
+              <h4>Why it's good</h4>
+              <span class="rich">strengths</span>
+            </div>
+            <ul class="good">
+              <li><b>The canvas fits multi-agent work</b> — humans reason about parallel runs better in 2D than in a tab strip; you SEE all sessions at once instead of cycling tabs.</li>
+              <li><b>Sessions are first-class objects</b> — top session tabs + a left vertical list with flame icons and live/working/idle dots make "which agents are alive" a glance, not a hunt. The single biggest thing to replicate.</li>
+              <li><b>Deep run visibility</b> — active model, context % meter, $ cost (this-chat + today), 5h and 7d reset timers, CLAUDE.md/rules/MCP/hook counts, an auto-mode toggle — turns invisible Claude Code state into a dashboard.</li>
+              <li><b>One unified theme</b> recolors the ENTIRE surface (chrome + terminal + editor) from a single file, so the warm near-black + orange identity stays consistent.</li>
+              <li><b>Real node-pty terminals</b> — zero emulation gaps; Claude Code, git, any CLI behaves exactly as native, and the status bar surfaces the project's Claude config.</li>
+              <li><b>Per-folder layout + session restore</b> — reopen a project and the exact workspace returns.</li>
+            </ul>
+          </div>
+
+          <!-- Customize -->
+          <div class="dpart span2">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 01-.6 2.8l2 1.2-2 3.4-2.2-1a7 7 0 01-2.4 1.4L13.4 23h-2.8l-.4-2.2a7 7 0 01-2.4-1.4l-2.2 1-2-3.4 2-1.2A7 7 0 015 12"/></svg></span>
+              <h4>Customize — the real knobs</h4>
+            </div>
+            <ul>
+              <li><b>Unified single-JSON theme</b> — app chrome + full 16-color xterm palette + Monaco base/syntax tokens in one object, via a <code>customThemes</code> array + <code>activeThemeId</code>, validated against <code>theme.schema.json</code>, imported through Settings → Appearance → Import.</li>
+              <li><b>System light/dark auto-switch</b> (<code>systemLightThemeId</code> / <code>systemDarkThemeId</code>) and a dedicated agent accent (<code>agent-rgb</code> / <code>agent-light-rgb</code>) so the AI presence is visually distinct.</li>
+              <li><b>Default identity</b> — warm near-black surfaces with an orange <code>#e0683c</code> accent.</li>
+              <li><b>Editor/terminal</b> — font size, minimap, terminal scrollback, contrast, cursor blink, <code>optionIsMeta</code>, auto-suspend idle terminals.</li>
+              <li><b>Canvas</b> — grid style (lines/dots), snap-to-grid, auto-focus largest visible node, default panel size, zoom speed.</li>
+              <li><b>Workspace</b> — default shell path, file exclusions, session order, recent projects, browser homepage/search engine, link open target.</li>
+              <li><b>Every keybinding rebindable</b>; whole environment portable via one <code>config.json</code>.</li>
+              <li><b>Provider-agnostic agent</b> — Anthropic-first plus Codex / Copilot / Gemini / OpenRouter / Groq / Mistral / DeepSeek, with per-chat model memory.</li>
+            </ul>
+          </div>
+
+          <!-- Extensions guarantee -->
+          <div class="extns">
+            <span class="echk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span>
+            <span class="ec">
+              <span class="etitle">Extensions: <span class="full">full access</span></span>
+              This mode is a VS Code <b>Profile</b> over Ursula's shared extension set (<code>useDefaultFlags.extensions=true</code>) — all available and <b>never removed on switch</b>:
+              <span class="pills"><span class="xp"><span class="pd"></span>Claude Code</span><span class="xp"><span class="pd"></span>Kilo Code</span><span class="xp"><span class="pd"></span>any Open VSX extension</span></span>
+              <span class="edge"><b>Major upgrade over real Cate:</b> Cate uses Monaco the engine but NOT the VS Code extension host, so it <b>cannot</b> load VS Code extensions at all. Ursula keeps Cate's canvas, first-class sessions, status-bar dashboard, and unified-theme feel WITH a full extension host behind it.</span>
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 6 — LITE / OPTIMIZER (HERO)                           -->
+  <!-- ============================================================ -->
+  <section class="screen" id="screen-lite" role="tabpanel">
+    <div class="screenhead">
+      <h2><span class="pre">06 · hero</span> Lite / Optimizer — tuned to your Mac</h2>
+      <p>Terax's lean chrome plus the full hardware-tuned optimization block. The banner makes the win visible: this is the room "Optimize now" applies and the badge points weak machines to.</p>
+    </div>
+
+    <div class="ide">
+      <div class="titlebar">
+        <div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <div class="menubar compact"><span>Ursula</span><span>···</span></div>
+      </div>
+      <!-- THE OPTIMIZATION WIN BANNER -->
+      <div class="litebanner">
+        <span class="spark"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></span>
+        <span class="lt"><b>Optimized for your Mac</b> — GPU render off, watchers trimmed, telemetry & experiments disabled.</span>
+        <span class="freed">~1.4 GB RAM freed</span>
+      </div>
+      <div class="ide-body">
+        <!-- bare chrome like Terax: no activity bar · Sessions rail still rides -->
+        <div class="sessrail">
+          <div class="srhead"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg> Sessions</div>
+          <div class="drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg> drag to move ⇄</div>
+          <div class="chips">
+            <div class="schip on"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">g3ac</span><span class="sd live"></span></div>
+            <div class="schip"><svg class="flame" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2c1 3-1 4-1 6 0 1 1 2 2 2 2 0 3-2 3-2 1 2 2 4 2 6a7 7 0 11-14 0c0-3 2-5 4-7 1.5-1.5 2-5 4-5z"/></svg><span class="sn">finance</span><span class="sd"></span></div>
+          </div>
+          <div class="srfoot">Editor tabs stay native; the Sessions rail is the movable vertical surface.</div>
+        </div>
+        <div class="sidebar">
+          <div class="sbhead">Explorer</div>
+          <div class="tree">
+            <div class="row"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4v16h16V7h-9z"/></svg> g3ac-underwriting</div>
+            <div class="row indent active"><span class="fdot"></span> scoring.ts</div>
+            <div class="row indent"><span class="fdot"></span> schema.ts</div>
+            <div class="row indent" style="opacity:.45"><span class="fdot"></span> node_modules <span style="margin-left:auto;font-size:9.5px;color:var(--ink-3)">watch-excluded</span></div>
+            <div class="row indent" style="opacity:.45"><span class="fdot"></span> dist <span style="margin-left:auto;font-size:9.5px;color:var(--ink-3)">watch-excluded</span></div>
+          </div>
+        </div>
+        <div class="main">
+          <div class="tabstrip">
+            <div class="single-anchor"><span class="glyph"></span> scoring.ts <span class="meta">— single anchor</span></div>
+          </div>
+          <div class="editor">
+            <div class="gutter"><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div></div>
+            <div class="code">
+              <span class="ln"><span class="cm">// Lite: every cycle saved goes to the model, not chrome</span></span>
+              <span class="ln"><span class="kw">export function</span> <span class="fn">scoreApplicant</span>(a: <span class="nm">Applicant</span>) {</span>
+              <span class="ln">  <span class="kw">return</span> <span class="fn">clamp</span>(a.revenue / <span class="nm">12_000</span>, <span class="nm">0</span>, <span class="nm">100</span>);</span>
+              <span class="ln">}</span>
+            </div>
+            <!-- minimap off, occurrence highlight off, lightbulb off -->
+          </div>
+          <div class="panel" style="flex:0 0 120px">
+            <div class="panel-tabs"><span class="pt on">zsh</span><span class="grow"></span><span class="pmax">gpu render: off</span></div>
+            <div class="term">
+              <span class="l"><span class="prompt">ursula</span> <span class="path">~/g3ac</span> $ <span class="dim"># watchers narrowed · symlinks unfollowed</span></span>
+              <span class="l ok">  ✓ idle footprint down to 4.7 GB</span>
+              <span class="l"><span class="prompt">ursula</span> <span class="path">~/g3ac</span> $ <span class="cursor"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="statusbar">
+        <div class="pill mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="currentColor"/></svg> Lite</div>
+        <div class="seg">main</div>
+        <div class="seg">render off</div>
+        <div class="pill ram"><span class="ramdot"></span> RAM <b>4.7 GB</b> / 18</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="chip"><span class="sq"></span> Inherits <b>BASE_LEAN</b> + full optimization block</span>
+      <span class="chip"><span class="sq"></span> <b>gpuAcceleration</b> = hardware-tuned (off on weak GPU)</span>
+      <span class="chip"><span class="sq"></span> watcherExclude broadened · symlinks <b>off</b></span>
+      <span class="chip"><span class="sq"></span> North star: <b>any Mac gets a great AI vibe-coding setup</b></span>
+    </div>
+
+    <!-- LITE detail panel -->
+    <details class="detail" open>
+      <summary>
+        <svg class="dchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
+        <span class="dtitle">What <span class="acc">Lite</span> mode is</span>
+        <span class="dwhat">a minimal, distraction-free baseline — the quiet end of the spectrum</span>
+        <span class="dmeta"><span class="src">presentation change, not capability</span><span class="opencue"></span></span>
+      </summary>
+      <div class="dbody">
+        <div class="dgrid">
+
+          <!-- How it works -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+              <h4>How it works</h4>
+            </div>
+            <p class="lead">A stripped-down visual mode: a clean editor + real terminal with the AI panels, canvas, status-bar dashboard, and block UI dialed down or hidden for focus and speed. It is a presentation/layout change only — capability is untouched.</p>
+          </div>
+
+          <!-- Why it's good -->
+          <div class="dpart">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.2 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 20.2l1.4-6.7-5-4.6 6.8-.7z"/></svg></span>
+              <h4>Why it's good</h4>
+              <span class="rich">strengths</span>
+            </div>
+            <ul class="good">
+              <li><b>Fast and distraction-free</b> — minimal chrome means lower visual load and a snappier surface for focused editing or quick terminal work.</li>
+              <li><b>Nothing is actually removed</b> — "lite" is purely a visual/layout choice, so you lose no capability by working here.</li>
+              <li><b>Lowest-friction entry point</b> — a good default when you don't need canvas, blocks, or a full agent dashboard and just want to type and run.</li>
+            </ul>
+          </div>
+
+          <!-- Customize -->
+          <div class="dpart span2">
+            <div class="ph">
+              <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 01-.6 2.8l2 1.2-2 3.4-2.2-1a7 7 0 01-2.4 1.4L13.4 23h-2.8l-.4-2.2a7 7 0 01-2.4-1.4l-2.2 1-2-3.4 2-1.2A7 7 0 015 12"/></svg></span>
+              <h4>Customize — the real knobs</h4>
+            </div>
+            <ul>
+              <li><b>Theme</b> — the same unified theme system as the other modes; pick a minimal/low-chrome variant.</li>
+              <li><b>Editor + terminal essentials</b> — font size, scrollback, minimap on/off.</li>
+              <li><b>Keybindings</b> — the same rebindable, file-based config as every other mode.</li>
+              <li><b>Which AI surfaces are visible</b> — collapse/hide the agent panel, status-bar dashboard, and block decorations for a quiet workspace.</li>
+              <li><b>Provider choice and per-chat model</b> still available when you do invoke the agent.</li>
+            </ul>
+          </div>
+
+          <!-- Extensions guarantee -->
+          <div class="extns">
+            <span class="echk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span>
+            <span class="ec">
+              <span class="etitle">Extensions: <span class="full">full access</span></span>
+              <b>The key point for Lite:</b> it is a VS Code <b>Profile</b> over the SAME shared extension set (<code>useDefaultFlags.extensions=true</code>) — these are present here too and <b>never removed</b> when you switch in or out:
+              <span class="pills"><span class="xp"><span class="pd"></span>Claude Code</span><span class="xp"><span class="pd"></span>Kilo Code</span><span class="xp"><span class="pd"></span>any Open VSX extension</span></span>
+              <span class="edge"><b>"Lite" trims visual chrome, NOT capability</b> — no extension is ever removed when you enter or leave this mode.</span>
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 7 — RAM GUARD                                         -->
+  <!-- ============================================================ -->
+  <section class="screen" id="screen-guard" role="tabpanel">
+    <div class="screenhead">
+      <h2><span class="pre">07</span> RAM Guard <span style="font-weight:500;color:var(--ink-3);font-size:13px">— Bone + Gold dashboard</span></h2>
+      <p>One poll loop, no second timer. The status-bar RAM pill opens this. Every Free re-validates the pid against the live snapshot before it ever calls kill.</p>
+    </div>
+
+    <div class="guard">
+      <!-- LEFT column: gauges + hardware + optimize -->
+      <div>
+        <div class="gcard">
+          <h3>Memory pressure</h3>
+          <p class="h-sub">Live · usedPct from the existing tick</p>
+          <div class="gauge-num">
+            <span class="big">73<span style="font-size:18px">%</span></span>
+            <span class="of">13.1 GB used of 18 GB</span>
+            <span class="state warn">Healthy → nearing warn</span>
+          </div>
+          <div class="biggauge">
+            <div class="fill" style="width:73%"></div>
+            <div class="ticks"><div class="tick warn"></div><div class="tick crit"></div></div>
+          </div>
+          <div class="ticklbls"><span>0</span><span class="warnm">warn 75%</span><span class="critm">crit 88%</span><span>100</span></div>
+          <div class="subbar-note" style="margin-top:8px">Shown at 73% (healthy → nearing warn). The live gauge also turns the bar <span style="color:var(--warn);font-weight:600">amber past 75%</span> and <span style="color:var(--crit);font-weight:600">red past 88%</span> — those crit states aren't pictured here.</div>
+
+          <div class="subbar-wrap">
+            <div class="subbar-lbl"><span>Compressor pressure</span><b>0.9 GB / 18 GB · 5%</b></div>
+            <div class="subbar"><div class="f" style="width:5%;background:var(--good)"></div></div>
+            <div class="subbar-note">Red past 30% — the honest macOS memory-pressure danger sign. You're well clear.</div>
+          </div>
+
+          <!-- HARDWARE CARD -->
+          <div class="hwgrid">
+            <div class="hwcell">
+              <div class="k">Detected RAM</div>
+              <div class="v">18 GB <small>total</small></div>
+            </div>
+            <div class="hwcell">
+              <div class="k">GPU</div>
+              <div class="v">M3 Pro <small>integrated · shared memory</small></div>
+            </div>
+          </div>
+          <div class="verdictcard">
+            <span class="star"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.2 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 20.2l1.4-6.7-5-4.6 6.8-.7z"/></svg></span>
+            <span class="vt">Recommended for your Mac: <b>Terax</b> — capable, 18 GB. On a weak machine this reads <b>Lite</b>.</span>
+          </div>
+
+          <button class="optbtn" data-toast="Applying Lite — tuned to this Mac · GPU value baked in">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>
+            Optimize now
+          </button>
+          <div class="optsub">Applies Lite mode — tuned to this Mac. One click, reversible.</div>
+
+          <button class="hogbtn" data-toast="Freed the biggest hog — chat is safe on disk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+            Free the biggest hog
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT column: sessions + interrupted -->
+      <div>
+        <div class="sesshead">
+          <h3>Claude sessions</h3>
+          <span class="count">3 active · 1 interrupted</span>
+        </div>
+
+        <!-- session 1 -->
+        <div class="sesscard">
+          <div class="top">
+            <div class="dirico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4v16h16V7h-9z"/></svg></div>
+            <div>
+              <div class="dir">~/g3ac-underwriting</div>
+              <div class="met">age <b>2h 14m</b> · pid 48213 · cwd matched</div>
+            </div>
+            <div class="sz"><div class="mb">2,140<span style="font-size:11px"> MB</span></div><div class="st live">live</div></div>
+          </div>
+          <div class="rsbar"><span style="width:82%"></span></div>
+          <div class="sessacts">
+            <button class="free"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 6h14M9 6V4h6v2M18 6l-1 14H7L6 6"/></svg> Free</button>
+            <button class="resume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8z"/></svg> Resume</button>
+            <button class="reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> Reveal</button>
+          </div>
+          <div class="safe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg> Your chat is safe on disk — resume anytime.</div>
+        </div>
+
+        <!-- session 2 -->
+        <div class="sesscard">
+          <div class="top">
+            <div class="dirico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4v16h16V7h-9z"/></svg></div>
+            <div>
+              <div class="dir">~/finance</div>
+              <div class="met">age <b>41m</b> · pid 51902 · cwd matched</div>
+            </div>
+            <div class="sz"><div class="mb">880<span style="font-size:11px"> MB</span></div><div class="st live">live</div></div>
+          </div>
+          <div class="rsbar"><span style="width:34%"></span></div>
+          <div class="sessacts">
+            <button class="free"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 6h14M9 6V4h6v2M18 6l-1 14H7L6 6"/></svg> Free</button>
+            <button class="resume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8z"/></svg> Resume</button>
+            <button class="reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> Reveal</button>
+          </div>
+          <div class="safe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg> Your chat is safe on disk — resume anytime.</div>
+        </div>
+
+        <!-- session 3 -->
+        <div class="sesscard">
+          <div class="top">
+            <div class="dirico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4v16h16V7h-9z"/></svg></div>
+            <div>
+              <div class="dir">~/booking-tool</div>
+              <div class="met">age <b>3h 02m</b> · pid 47744 · cwd matched</div>
+            </div>
+            <div class="sz"><div class="mb">610<span style="font-size:11px"> MB</span></div><div class="st idle">idle</div></div>
+          </div>
+          <div class="rsbar"><span style="width:24%"></span></div>
+          <div class="sessacts">
+            <button class="free"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 6h14M9 6V4h6v2M18 6l-1 14H7L6 6"/></svg> Free</button>
+            <button class="resume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8z"/></svg> Resume</button>
+            <button class="reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> Reveal</button>
+          </div>
+          <div class="safe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg> Your chat is safe on disk — resume anytime.</div>
+        </div>
+
+        <!-- interrupted strip -->
+        <div class="interrupted">
+          <div class="ih"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg> Interrupted sessions</div>
+          <div class="istrip">
+            <span class="idir">~/distressed-property-leads</span>
+            <span class="iage">stopped 20m ago · on disk</span>
+            <button>▶ Resume</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="chip"><span class="sq"></span> Reuses the <b>single poll loop</b> · no second timer</span>
+      <span class="chip"><span class="sq"></span> Kill re-validates <b>pid AND cwd</b> vs live snapshot</span>
+      <span class="chip"><span class="sq"></span> reveal-don't-stack · per-render <b>CSP nonce</b> · fully offline</span>
+    </div>
+  </section>
+
+  <!-- ===== FOOT ===== -->
+  <div class="foot">
+    <span><b>Ursula — Visual Plan.</b> Static mockup for review · five modes + RAM Guard. No live process control, no real RAM readings — every number is illustrative. Cate's Ember palette is its own skin; the plan chrome runs warm near-black + gold.</span>
+    <span>Design system: Near-black <b>#14130F</b> · Ink <b>#ECE6D9</b> · Gold <b>#C2A878</b></span>
+  </div>
+
+  <!-- persistent extension-guarantee badge — visible across every mode -->
+  <div class="extbadge" role="note" aria-label="Extension guarantee">
+    <span class="eb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span>
+    <span class="eb-t">
+      <b>Every mode = the full extension marketplace.</b>
+      <span class="sub">Switching modes never uninstalls anything — Claude Code, Kilo Code &amp; all Open VSX extensions stay.</span>
+    </span>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="sq"></span><span id="toast-text">Done</span></div>
+
+<script>
+  // ---- screen tab switching ----
+  const tabs = document.querySelectorAll('nav.tabs button');
+  const screens = document.querySelectorAll('.screen');
+  function show(name){
+    tabs.forEach(t=>t.setAttribute('aria-selected', t.dataset.screen===name ? 'true':'false'));
+    screens.forEach(s=>s.classList.toggle('active', s.id==='screen-'+name));
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.screen)));
+
+  // ---- mode cards (switcher) navigate to that mode's preview ----
+  document.querySelectorAll('[data-go]').forEach(el=>{
+    el.addEventListener('click',()=>show(el.dataset.go));
+    el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();show(el.dataset.go);} });
+  });
+
+  // ---- toast for dashboard buttons (mock actions) ----
+  const toast = document.getElementById('toast');
+  const toastText = document.getElementById('toast-text');
+  let toastTimer;
+  document.querySelectorAll('[data-toast]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      toastText.textContent = b.dataset.toast;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>toast.classList.remove('show'), 2600);
+    });
+  });
+  // session card buttons -> generic safe toast
+  document.querySelectorAll('.sessacts button, .istrip button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const verb = b.textContent.trim();
+      toastText.textContent = verb.includes('Free') ? 'Freed — chat saved on disk, resume anytime'
+        : verb.includes('Resume') ? 'Resuming session from disk…'
+        : 'Revealing in Finder…';
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>toast.classList.remove('show'), 2400);
+    });
+  });
+
+  // ---- optimizer 3-state toggle ----
+  document.querySelectorAll('.seg3 button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+    });
+  });
+
+  // ---- keyboard: 1-7 jump screens ----
+  const order=['switcher','terax','warp','cursor','cate','lite','guard'];
+  document.addEventListener('keydown',e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+    const n=parseInt(e.key,10);
+    if(n>=1&&n<=7) show(order[n-1]);
+  });
+</script>
+</body>
+</html>

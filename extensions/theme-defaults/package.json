@@ -20,6 +20,12 @@
         "path": "./themes/ursula-dark.json"
       },
       {
+        "id": "Ursula Cate",
+        "label": "Ursula Cate",
+        "uiTheme": "vs-dark",
+        "path": "./themes/ursula-cate-color-theme.json"
+      },
+      {
         "id": "Light 2026",
         "label": "%light2026ThemeLabel%",
         "uiTheme": "vs",
