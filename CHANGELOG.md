@@ -9,15 +9,16 @@ All notable changes to the Ursula fork. Format: `## [YYYY-MM-DD]` with sections,
 - **First pick of a never-used mode did nothing** — `createProfileFromTemplate` creates a profile but doesn't switch to it, so the reload reopened the same profile. Now switches to the freshly created profile first.
 - **The Warp command bar mangled any command containing `${...}`** — it routed through `sendSequence`, which runs VS Code variable resolution. Now sends verbatim via the terminal service (and waits for the pty on cold start so the first command never loses characters).
 - **The Cate session-tab strip rendered once and froze** (and was usually empty, since session data loads asynchronously). Now refreshes live every few seconds while you're in Cate, and disposes its old click-listeners each render instead of leaking them.
-- **Panel maximize (Warp/Terax) mis-fired** when the user's panel alignment wasn't centered. Now keys off editor visibility, which is alignment-independent.
 - **Resuming a session with no working directory** silently did nothing; it now resumes from the home directory.
+- **Panel/aux maximize made fully deterministic** — the maximize logic depended on panel alignment and a remembered-maximized flag, which could leave a mode with the editor hidden or the panel wrongly maximized (Cate/Cursor especially). Replaced with explicit hide/show of the editor + panel, so every non-terminal mode always keeps the editor visible and every terminal mode fills cleanly.
+- **The Warp command bar no longer hangs or double-spawns** — a bounded, self-cancelling wait replaces an unbounded one (a broken shell degrades instead of freezing the bar), and a re-entrancy guard stops a fast double-Enter from opening two terminals.
 
 ### Added
-- **Re-entry layout persistence** — customizations you make inside a mode now persist when you leave and come back to it (not just within one session). Stored per mode, and fail-safe: a missing or malformed snapshot falls back to the mode's defaults.
+- **Re-entry layout persistence** — customizations you make inside a mode now persist when you leave and come back to it (not just within one session). Stored per mode, fail-safe (a missing/malformed snapshot falls back to defaults), and Default always stays the true baseline.
 - **`docs/MODES.md`** (how the modes system works + how to add one) and **`docs/diagrams/Ursula-Modes-architecture.png`** (one-page architecture).
 
 ### Why
-The reskin shipped without GUI test coverage (the dev window can't be driven headlessly here), so a five-way adversarial source review stood in for it and caught ten real bugs — several of which broke a mode's core behavior. All compile clean and boot clean.
+The reskin shipped without GUI test coverage (the dev window can't be driven headlessly here), so adversarial source review stood in for it: **four rounds, eighteen real bugs found and fixed, until a round came back clean** (10 → 6 → 2 → 0). Several broke a mode's core behavior. Everything compiles and boots clean.
 
 ## [2026-06-21] — Layout engine: each mode genuinely RESTRUCTURES the window + per-mode RAM right-sizing
 

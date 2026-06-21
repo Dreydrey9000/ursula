@@ -6,6 +6,7 @@
 import { CancellationToken } from '../../../../base/common/cancellation.js';
 import { KeyChord, KeyCode, KeyMod } from '../../../../base/common/keyCodes.js';
 import { Disposable, DisposableStore, MutableDisposable, toDisposable } from '../../../../base/common/lifecycle.js';
+import { raceTimeout } from '../../../../base/common/async.js';
 import { $, append, addDisposableListener, clearNode } from '../../../../base/browser/dom.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 import { createStyleSheet } from '../../../../base/browser/domStylesheets.js';
@@ -114,6 +115,7 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 	private cateTabs: HTMLElement | undefined;
 	private readonly cateTabDisposables = this._register(new DisposableStore()); // per-render tab listeners (cleared each render)
 	private readonly cateTimer = this._register(new MutableDisposable());          // live-refresh interval while in Cate
+	private warpSending = false;                                                   // re-entrancy guard so a double-Enter never spawns 2 terminals
 	private sheetVisibleCtx: IContextKey<boolean>;
 	private sheetOpen = false;
 
@@ -376,15 +378,16 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 			return;
 		}
 
-		// Leaving the previous mode: snapshot how YOU left it, so re-entering restores your layout, not the defaults.
-		if (prev !== undefined) {
+		// Leaving a REAL mode (not Default): snapshot how you left it so re-entering restores your layout.
+		// Default must stay the true baseline, so it is never snapshotted or restored from a saved layout.
+		if (prev !== undefined && MODE_BY_NAME[prev] !== undefined) {
 			this.snapshotLayout(prev);
 		}
 
-		// Entering: restore this mode's saved layout if we have a valid one, else apply its defaults.
-		// (Saved snapshot keeps the mode's intrinsic focusSessions/openChat actions, only its geometry persists.)
+		// Entering: a real mode restores its saved layout (if valid) else its defaults; Default is always baseline.
+		// (A restored snapshot keeps the mode's intrinsic focusSessions/openChat actions; only geometry persists.)
 		const defaults: IModeLayout = mode !== undefined ? MODE_LAYOUT[mode] : DEFAULT_LAYOUT;
-		const saved = this.readSavedLayout(profileName);
+		const saved = mode !== undefined ? this.readSavedLayout(profileName) : undefined;
 		const spec: IModeLayout = saved ? { ...saved, focusSessions: defaults.focusSessions, openChat: defaults.openChat } : defaults;
 
 		this.applyLayoutSpec(spec);
@@ -397,28 +400,28 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 		}
 	}
 
-	/** Drive the workbench parts to match a layout spec. Editor visibility (not isPanelMaximized, which
-	 *  needs alignment==='center') is the maximize signal: toggleMaximizedPanel maximizes by hiding the editor. */
+	/** Drive the workbench parts to match a layout spec. Fully DETERMINISTIC — no toggleMaximizedPanel
+	 *  (its result depends on panel alignment AND is confused by a maximized aux bar). "maximize" = hide
+	 *  the editor while the panel stays visible, so the panel fills the window (terminal full-bleed). */
 	private applyLayoutSpec(spec: IModeLayout): void {
 		try {
 			const L = this.layoutService;
-			const editorVisible = () => L.isVisible(Parts.EDITOR_PART, mainWindow);
+			// Start from a known state: a maximized aux bar hides BOTH the editor and the panel, which would
+			// fight the deterministic toggles below. Un-maximize it first (no-op when it isn't maximized).
+			if (L.isAuxiliaryBarMaximized()) {
+				L.toggleMaximizedAuxiliaryBar();
+			}
 			L.setPartHidden(spec.sidebar === 'hide', Parts.SIDEBAR_PART);
 			L.setPartHidden(spec.auxbar === 'hide', Parts.AUXILIARYBAR_PART);
-			if (spec.panel === 'hide') {
-				L.setPartHidden(false, Parts.EDITOR_PART);     // keep one focusable surface — never hide editor + panel together
+			if (spec.panel === 'maximize') {
+				L.setPartHidden(false, Parts.PANEL_PART);      // panel fills the center...
+				L.setPartHidden(true, Parts.EDITOR_PART);      // ...editor steps aside (panel stays = a focusable surface)
+			} else if (spec.panel === 'hide') {
+				L.setPartHidden(false, Parts.EDITOR_PART);     // editor is the focusable surface
 				L.setPartHidden(true, Parts.PANEL_PART);
-			} else if (spec.panel === 'maximize') {
-				L.setPartHidden(false, Parts.PANEL_PART);      // ensure visible before maximize
-				if (editorVisible()) {
-					L.toggleMaximizedPanel();                  // editor visible -> maximize (hides it); skip if already maximized
-				}
-			} else {
-				L.setPartHidden(false, Parts.PANEL_PART);
-				if (!editorVisible()) {
-					L.toggleMaximizedPanel();                  // editor hidden -> un-maximize (brings it back)
-				}
-				L.setPartHidden(false, Parts.EDITOR_PART);
+			} else { // 'show'
+				L.setPartHidden(false, Parts.PANEL_PART);   // showing the panel CAN re-maximize it (VS Code's remembered-maximized flag)...
+				L.setPartHidden(false, Parts.EDITOR_PART);  // ...so re-assert the editor LAST — a 'show' mode must always keep the editor visible
 			}
 			if (spec.auxWidth !== undefined && spec.auxbar === 'show') {
 				const size = L.getSize(Parts.AUXILIARYBAR_PART);
@@ -439,7 +442,9 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 			const snap = {
 				sidebar: L.isVisible(Parts.SIDEBAR_PART, mainWindow) ? 'show' : 'hide',
 				auxbar: auxVisible ? 'show' : 'hide',
-				panel: !editorVisible ? 'maximize' : (panelVisible ? 'show' : 'hide'),
+				// panel-visible + editor-hidden = "maximize"; panel-hidden = "hide"; else "show". Consistent with
+				// applyLayoutSpec (editor-hidden only ever comes from our own panel-maximize now).
+				panel: !panelVisible ? 'hide' : (!editorVisible ? 'maximize' : 'show'),
 				auxWidth: auxVisible ? L.getSize(Parts.AUXILIARYBAR_PART).width : undefined,
 			};
 			this.storageService.store(UrsulaModesContribution.SAVED_LAYOUT_PREFIX + profileName, JSON.stringify(snap), StorageScope.WORKSPACE, StorageTarget.MACHINE);
@@ -826,17 +831,25 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 	 *  ${...} variable resolution and would mangle real shell commands (e.g. `echo ${HOME}`). Creates a
 	 *  terminal if none exists and waits for the pty so the first command never loses leading characters. */
 	private async sendToActiveTerminal(cmd: string): Promise<void> {
+		if (this.warpSending) {
+			return; // a send is already in flight — a fast double-Enter must not spawn a second terminal
+		}
+		this.warpSending = true;
 		try {
 			let term = this.terminalService.activeInstance;
 			if (!term) {
-				term = await this.terminalService.createTerminal(); // lands in the (maximized) panel
-				this.terminalService.setActiveInstance(term);
-				await term.processReady;                            // cold start: wait for the pty so no leading chars drop
+				term = await this.terminalService.createAndFocusTerminal(); // reveals the panel + focuses when xterm is ready
+			} else {
+				term.focus();
 			}
-			term.focus();
-			await term.sendText(cmd, true);                        // shouldExecute=true runs it; verbatim, no resolution
+			// Bound the pty-ready wait: a broken shell must DEGRADE, not hang the bar forever. raceTimeout
+			// self-cancels its timer (no zombie), and the pty buffers input, so we still send on timeout.
+			await raceTimeout(term.processReady, 3000);
+			await term.sendText(cmd, true); // shouldExecute=true runs it; verbatim (no ${...} resolution)
 		} catch {
 			// no terminal available — ignore (the input already cleared)
+		} finally {
+			this.warpSending = false;
 		}
 	}
 
