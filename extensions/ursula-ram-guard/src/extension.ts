@@ -104,7 +104,9 @@ export function activate(context: vscode.ExtensionContext): void {
 		// Resume a specific session by pid — a Cate session tab click resumes THAT session in a terminal.
 		vscode.commands.registerCommand('ursula.sessions.resumeByPid', (pid?: number): void => {
 			const s = lastSessions.find(x => x.pid === pid);
-			if (s && s.cwd) { resumeInTerminal(s.cwd, s.sessionId); }
+			// resumeInTerminal(undefined, sessionId) falls back to the home dir + `claude --resume <id>`,
+			// so a cwd-less session still resumes — don't gate on cwd.
+			if (s) { resumeInTerminal(s.cwd, s.sessionId); }
 		}),
 		// Focus the Sessions rail (alias to the view's auto-generated focus command) — Cate mode startup uses this.
 		vscode.commands.registerCommand('ursula.sessions.focus', (): void => { void vscode.commands.executeCommand('ursulaSessions.focus'); }),

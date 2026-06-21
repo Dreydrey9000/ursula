@@ -5,7 +5,7 @@
 
 import { CancellationToken } from '../../../../base/common/cancellation.js';
 import { KeyChord, KeyCode, KeyMod } from '../../../../base/common/keyCodes.js';
-import { Disposable, MutableDisposable } from '../../../../base/common/lifecycle.js';
+import { Disposable, DisposableStore, MutableDisposable, toDisposable } from '../../../../base/common/lifecycle.js';
 import { $, append, addDisposableListener, clearNode } from '../../../../base/browser/dom.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 import { createStyleSheet } from '../../../../base/browser/domStylesheets.js';
@@ -22,6 +22,7 @@ import { IUserDataProfileImportExportService, IUserDataProfileManagementService,
 import { IHostService } from '../../../services/host/browser/host.js';
 import { IExtensionService } from '../../../services/extensions/common/extensions.js';
 import { IWorkbenchLayoutService, Parts } from '../../../services/layout/browser/layoutService.js';
+import { ITerminalService } from '../../terminal/browser/terminal.js';
 import { IWorkbenchContribution, registerWorkbenchContribution2, WorkbenchPhase } from '../../../common/contributions.js';
 import { DEFAULT_LAYOUT, IModeLayout, MODE_BY_NAME, MODE_CSS, MODE_LAYOUT, MODE_NAME, MODE_TEMPLATE, UrsulaMode, withGpuAcceleration } from './templates.js';
 import './media/ursulaModeBar.css';
@@ -111,6 +112,8 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 	// Mode-specific overlay widgets: Warp's command bar (bottom) + Cate's session-tab strip (top).
 	private warpBar: HTMLElement | undefined;
 	private cateTabs: HTMLElement | undefined;
+	private readonly cateTabDisposables = this._register(new DisposableStore()); // per-render tab listeners (cleared each render)
+	private readonly cateTimer = this._register(new MutableDisposable());          // live-refresh interval while in Cate
 	private sheetVisibleCtx: IContextKey<boolean>;
 	private sheetOpen = false;
 
@@ -128,6 +131,7 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
 		@IContextKeyService private readonly contextKeyService: IContextKeyService,
 		@IStorageService private readonly storageService: IStorageService,
+		@ITerminalService private readonly terminalService: ITerminalService,
 	) {
 		super();
 
@@ -352,6 +356,8 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 	// clobber a layout tweak the user made inside a mode (Drey: customizations must persist) — so we
 	// guard on a per-workspace "shapedFor" marker and apply ONLY on a genuine mode change.
 	private static readonly SHAPED_FOR_KEY = 'ursula.mode.shapedFor';
+	// Re-entry persistence: the part-visibility you LEFT a mode in, restored on return (fail-safe to defaults).
+	private static readonly SAVED_LAYOUT_PREFIX = 'ursula.mode.savedLayout.';
 
 	private applyModeLayout(profileName: string): void {
 		if (this.isAgentsWindow) {
@@ -370,25 +376,49 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 			return;
 		}
 
-		const spec: IModeLayout = mode !== undefined ? MODE_LAYOUT[mode] : DEFAULT_LAYOUT;
+		// Leaving the previous mode: snapshot how YOU left it, so re-entering restores your layout, not the defaults.
+		if (prev !== undefined) {
+			this.snapshotLayout(prev);
+		}
+
+		// Entering: restore this mode's saved layout if we have a valid one, else apply its defaults.
+		// (Saved snapshot keeps the mode's intrinsic focusSessions/openChat actions, only its geometry persists.)
+		const defaults: IModeLayout = mode !== undefined ? MODE_LAYOUT[mode] : DEFAULT_LAYOUT;
+		const saved = this.readSavedLayout(profileName);
+		const spec: IModeLayout = saved ? { ...saved, focusSessions: defaults.focusSessions, openChat: defaults.openChat } : defaults;
+
+		this.applyLayoutSpec(spec);
+		this.storageService.store(UrsulaModesContribution.SHAPED_FOR_KEY, profileName, StorageScope.WORKSPACE, StorageTarget.MACHINE);
+
+		// Extension-contributed extras (Sessions rail focus / AI chat) only exist after the ext host
+		// re-registers post-switch, so run them async-gated. The native part toggles above already landed.
+		if (spec.focusSessions || spec.openChat) {
+			void this.runModeExtras(spec);
+		}
+	}
+
+	/** Drive the workbench parts to match a layout spec. Editor visibility (not isPanelMaximized, which
+	 *  needs alignment==='center') is the maximize signal: toggleMaximizedPanel maximizes by hiding the editor. */
+	private applyLayoutSpec(spec: IModeLayout): void {
 		try {
 			const L = this.layoutService;
+			const editorVisible = () => L.isVisible(Parts.EDITOR_PART, mainWindow);
 			L.setPartHidden(spec.sidebar === 'hide', Parts.SIDEBAR_PART);
 			L.setPartHidden(spec.auxbar === 'hide', Parts.AUXILIARYBAR_PART);
 			if (spec.panel === 'hide') {
 				L.setPartHidden(false, Parts.EDITOR_PART);     // keep one focusable surface — never hide editor + panel together
 				L.setPartHidden(true, Parts.PANEL_PART);
 			} else if (spec.panel === 'maximize') {
-				L.setPartHidden(false, Parts.PANEL_PART);      // ensure visible (idempotent) before maximize
-				if (!L.isPanelMaximized()) {
-					L.toggleMaximizedPanel();                  // GUARDED — maximize hides the editor internally; never un-maximize on a repeat entry
+				L.setPartHidden(false, Parts.PANEL_PART);      // ensure visible before maximize
+				if (editorVisible()) {
+					L.toggleMaximizedPanel();                  // editor visible -> maximize (hides it); skip if already maximized
 				}
 			} else {
-				L.setPartHidden(false, Parts.EDITOR_PART);
 				L.setPartHidden(false, Parts.PANEL_PART);
-				if (L.isPanelMaximized()) {
-					L.toggleMaximizedPanel();                  // back to a normal split
+				if (!editorVisible()) {
+					L.toggleMaximizedPanel();                  // editor hidden -> un-maximize (brings it back)
 				}
+				L.setPartHidden(false, Parts.EDITOR_PART);
 			}
 			if (spec.auxWidth !== undefined && spec.auxbar === 'show') {
 				const size = L.getSize(Parts.AUXILIARYBAR_PART);
@@ -397,14 +427,49 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 		} catch {
 			// a layout call must never break a mode switch
 		}
+	}
 
-		this.storageService.store(UrsulaModesContribution.SHAPED_FOR_KEY, profileName, StorageScope.WORKSPACE, StorageTarget.MACHINE);
-
-		// Extension-contributed extras (Sessions rail focus / AI chat) only exist after the ext host
-		// re-registers post-switch, so run them async-gated. The native part toggles above already landed.
-		if (spec.focusSessions || spec.openChat) {
-			void this.runModeExtras(spec);
+	/** Save the current part visibility for a mode, so re-entering it restores your layout. */
+	private snapshotLayout(profileName: string): void {
+		try {
+			const L = this.layoutService;
+			const editorVisible = L.isVisible(Parts.EDITOR_PART, mainWindow);
+			const panelVisible = L.isVisible(Parts.PANEL_PART, mainWindow);
+			const auxVisible = L.isVisible(Parts.AUXILIARYBAR_PART, mainWindow);
+			const snap = {
+				sidebar: L.isVisible(Parts.SIDEBAR_PART, mainWindow) ? 'show' : 'hide',
+				auxbar: auxVisible ? 'show' : 'hide',
+				panel: !editorVisible ? 'maximize' : (panelVisible ? 'show' : 'hide'),
+				auxWidth: auxVisible ? L.getSize(Parts.AUXILIARYBAR_PART).width : undefined,
+			};
+			this.storageService.store(UrsulaModesContribution.SAVED_LAYOUT_PREFIX + profileName, JSON.stringify(snap), StorageScope.WORKSPACE, StorageTarget.MACHINE);
+		} catch {
+			// snapshotting is best-effort — never block a switch
 		}
+	}
+
+	/** Read a saved layout for a mode; returns undefined (fall back to defaults) if absent or malformed. */
+	private readSavedLayout(profileName: string): IModeLayout | undefined {
+		try {
+			const raw = this.storageService.get(UrsulaModesContribution.SAVED_LAYOUT_PREFIX + profileName, StorageScope.WORKSPACE);
+			if (!raw) {
+				return undefined;
+			}
+			const p = JSON.parse(raw) as { sidebar?: unknown; auxbar?: unknown; panel?: unknown; auxWidth?: unknown };
+			const okSide = (v: unknown): v is 'show' | 'hide' => v === 'show' || v === 'hide';
+			const okPanel = (v: unknown): v is 'show' | 'hide' | 'maximize' => v === 'show' || v === 'hide' || v === 'maximize';
+			if (okSide(p.sidebar) && okSide(p.auxbar) && okPanel(p.panel)) {
+				return {
+					sidebar: p.sidebar,
+					auxbar: p.auxbar,
+					panel: p.panel,
+					auxWidth: typeof p.auxWidth === 'number' ? p.auxWidth : undefined,
+				};
+			}
+		} catch {
+			// malformed snapshot -> defaults
+		}
+		return undefined;
 	}
 
 	private async runModeExtras(spec: IModeLayout): Promise<void> {
@@ -502,7 +567,15 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 			return; // already baseline
 		}
 		await this.userDataProfileManagementService.switchProfile(defaultProfile);
-		this.notificationService.info(localize('ursula.toast.default', "Default — back to baseline."));
+		// switchProfile only changes the LIVE profile for an EMPTY window; with a folder open it just
+		// associates Default and takes effect on reload. Mirror applyMode: reload on the folder path so
+		// Default's settings/theme/layout actually load — never toast a no-op.
+		if (this.userDataProfileService.currentProfile.id === defaultProfile.id) {
+			this.applyModeLayout(defaultProfile.name); // restore the baseline layout live (empty-window path)
+			this.notificationService.info(localize('ursula.toast.default', "Default — back to baseline."));
+		} else {
+			await this.hostService.reload();
+		}
 	}
 
 	private async applyMode(mode: UrsulaMode): Promise<void> {
@@ -537,6 +610,13 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 				{ name: modeName, useDefaultFlags: { extensions: true } }, // keystone: share the default extension set
 				CancellationToken.None,
 			);
+			// createProfileFromTemplate CREATES but does not SWITCH. Without this, first-pick of a never-used
+			// mode would fall through to a reload that reopens the SAME profile (the mode never applies).
+			// switchProfile handles both: empty window -> live change + event; folder open -> associate (then reload below).
+			const created = this.userDataProfilesService.profiles.find(p => p.name === modeName);
+			if (created) {
+				await this.userDataProfileManagementService.switchProfile(created);
+			}
 		}
 
 		// Did the LIVE window actually adopt the mode? switchProfile/create only flips the live profile
@@ -721,19 +801,43 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 		this.cateTabs.style.display = mode === UrsulaMode.Cate ? 'flex' : 'none';
 		if (mode === UrsulaMode.Cate) {
 			void this.renderCateTabs();
+			// Keep the strip LIVE — Claude sessions start/stop while you sit in Cate. Without this the
+			// strip is frozen at its one-shot render (and often empty, since the data populates async).
+			if (!this.cateTimer.value) {
+				const handle = mainWindow.setInterval(() => void this.renderCateTabs(), 5000);
+				this.cateTimer.value = toDisposable(() => mainWindow.clearInterval(handle));
+			}
+		} else {
+			this.cateTimer.clear(); // stop refreshing when not in Cate
 		}
 		this.positionSwitcher();
 	}
 
-	/** Warp command bar: focus a terminal then send the typed command + CR so it actually runs. */
+	/** Warp command bar: run the typed command in the terminal, VERBATIM. */
 	private runWarpCommand(text: string): void {
 		const cmd = text.trim();
 		if (!cmd) {
 			return;
 		}
-		void this.commandService.executeCommand('workbench.action.terminal.focus')
-			.then(() => this.commandService.executeCommand('workbench.action.terminal.sendSequence', { text: cmd + '\r' }))
-			.catch(() => { /* no terminal available yet — ignore, the bar still cleared */ });
+		void this.sendToActiveTerminal(cmd);
+	}
+
+	/** Send VERBATIM via terminalService.sendText — NOT the sendSequence command, which runs VS Code
+	 *  ${...} variable resolution and would mangle real shell commands (e.g. `echo ${HOME}`). Creates a
+	 *  terminal if none exists and waits for the pty so the first command never loses leading characters. */
+	private async sendToActiveTerminal(cmd: string): Promise<void> {
+		try {
+			let term = this.terminalService.activeInstance;
+			if (!term) {
+				term = await this.terminalService.createTerminal(); // lands in the (maximized) panel
+				this.terminalService.setActiveInstance(term);
+				await term.processReady;                            // cold start: wait for the pty so no leading chars drop
+			}
+			term.focus();
+			await term.sendText(cmd, true);                        // shouldExecute=true runs it; verbatim, no resolution
+		} catch {
+			// no terminal available — ignore (the input already cleared)
+		}
 	}
 
 	/** Cate session tabs: one tab per live Claude session (data from the RAM Guard extension). */
@@ -750,6 +854,7 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 		}
 		const host = this.cateTabs;
 		clearNode(host);
+		this.cateTabDisposables.clear(); // dispose the previous render's click listeners (else they accumulate every refresh)
 		if (sessions.length === 0) {
 			const empty = append(host, $('.ursula-cate-tab.empty'));
 			empty.textContent = localize('ursula.cate.noSessions', "No active sessions");
@@ -761,7 +866,7 @@ export class UrsulaModesContribution extends Disposable implements IWorkbenchCon
 			const nm = append(tab, $('span.ursula-cate-tab-nm'));
 			nm.textContent = this.sessionLabel(s);
 			append(tab, $('span.ursula-cate-tab-dot.' + (s.status === 'busy' ? 'run' : 'idle')));
-			this._register(addDisposableListener(tab, 'click', () => {
+			this.cateTabDisposables.add(addDisposableListener(tab, 'click', () => {
 				void this.commandService.executeCommand('ursula.sessions.resumeByPid', s.pid);
 			}));
 		});

@@ -506,43 +506,9 @@ const CATE_CSS = `/* ===========================================================
    non-important injected border/color rules (listWidget.ts / theming participant).
    ============================================================================ */
 
-/* ---- Activity bar = warm session rail (KEPT, recolored) ---- */
-/* .part.activitybar: part.classList.add('part', ...classes) at workbench.ts:372,
-   classes carry partContainerClass 'activitybar' (activitybarPart.ts:143). */
-.monaco-workbench.ursula-mode-cate .part.activitybar {
-	background-color: #19120e !important;
-	border-right: 1px solid #2a201a !important;
-}
-
-/* Active (checked) activity item's left accent bar -> ember orange.
-   The theme injects this EXACT selector with NON-important border-left-color
-   (activitybarPart.ts:647), so !important here wins. */
-.monaco-workbench.ursula-mode-cate .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked .active-item-indicator:before {
-	border-left-color: #e0683c !important;
-}
-/* Focused-active accent ember (theme injects at activitybarPart.ts:660). */
-.monaco-workbench.ursula-mode-cate .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked:focus .active-item-indicator:before {
-	border-left-color: #e0683c !important;
-}
-/* Active item tile background warmed (.active-item-indicator box; injected target
-   at activitybarPart.ts:670; element created compositeBarActions.ts:281). */
-.monaco-workbench.ursula-mode-cate .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked .active-item-indicator {
-	background-color: rgba(224, 104, 60, 0.12) !important;
-}
-/* Active icon glyph itself -> gold (.action-label::before; theme injects the
-   .checked/.active variants at activitybarPart.ts:685-687; label className set
-   to 'action-label' at compositeBarActions.ts:394). */
-.monaco-workbench.ursula-mode-cate .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked .action-label::before,
-.monaco-workbench.ursula-mode-cate .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item.active .action-label::before {
-	color: #C2A878 !important;
-}
-
-/* Activity item badge -> ember (.badge created compositeBarActions.ts:277,
-   .badge-content at :278). */
-.monaco-workbench.ursula-mode-cate .activitybar .badge .badge-content {
-	background-color: #e0683c !important;
-	color: #141210 !important;
-}
+/* ---- The Sessions rail lives in the PRIMARY SIDE BAR now (Cate hides the activity bar), so the
+   rail recolor is the .part.sidebar + tree rules below. The old .part.activitybar rules were removed
+   — they targeted a part that is hidden in Cate. ---- */
 
 /* ---- Side bar = warm rail body ---- */
 /* .part.sidebar: partContainerClass 'sidebar' (sidebarPart.ts:199) added via

@@ -2,6 +2,23 @@
 
 All notable changes to the Ursula fork. Format: `## [YYYY-MM-DD]` with sections, one line per change, include the why.
 
+## [2026-06-21] — Modes hardening: red-team fixes, re-entry layout persistence, docs
+
+### Fixed (an adversarial source review found these before users did)
+- **Picking "Default" with a folder open did nothing** but showed a success toast — it only associated the profile and needed a reload. Now reloads on the folder path (mirrors the mode switch), so Default's settings + baseline layout actually load.
+- **First pick of a never-used mode did nothing** — `createProfileFromTemplate` creates a profile but doesn't switch to it, so the reload reopened the same profile. Now switches to the freshly created profile first.
+- **The Warp command bar mangled any command containing `${...}`** — it routed through `sendSequence`, which runs VS Code variable resolution. Now sends verbatim via the terminal service (and waits for the pty on cold start so the first command never loses characters).
+- **The Cate session-tab strip rendered once and froze** (and was usually empty, since session data loads asynchronously). Now refreshes live every few seconds while you're in Cate, and disposes its old click-listeners each render instead of leaking them.
+- **Panel maximize (Warp/Terax) mis-fired** when the user's panel alignment wasn't centered. Now keys off editor visibility, which is alignment-independent.
+- **Resuming a session with no working directory** silently did nothing; it now resumes from the home directory.
+
+### Added
+- **Re-entry layout persistence** — customizations you make inside a mode now persist when you leave and come back to it (not just within one session). Stored per mode, and fail-safe: a missing or malformed snapshot falls back to the mode's defaults.
+- **`docs/MODES.md`** (how the modes system works + how to add one) and **`docs/diagrams/Ursula-Modes-architecture.png`** (one-page architecture).
+
+### Why
+The reskin shipped without GUI test coverage (the dev window can't be driven headlessly here), so a five-way adversarial source review stood in for it and caught ten real bugs — several of which broke a mode's core behavior. All compile clean and boot clean.
+
 ## [2026-06-21] — Layout engine: each mode genuinely RESTRUCTURES the window + per-mode RAM right-sizing
 
 ### Added
