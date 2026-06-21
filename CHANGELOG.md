@@ -2,6 +2,37 @@
 
 All notable changes to the Ursula fork. Format: `## [YYYY-MM-DD]` with sections, one line per change, include the why.
 
+## [2026-06-21] — Layout engine: each mode genuinely RESTRUCTURES the window + per-mode RAM right-sizing
+
+### Added
+- **Per-mode layout engine** (`applyModeLayout` in ursulaModes.contribution.ts + declarative `MODE_LAYOUT` in templates.ts): each mode now hides/shows/resizes the actual workbench parts, not just recolors. Warp/Terax → side bars hidden + terminal maximized (full-bleed); Cate → primary side bar hidden, right aux bar shown with the Sessions rail focused; Cursor → side bar hidden, right aux bar shown and widened to 480px for the AI composer (editor stays the hero); Lite → everything hidden but the editor + status bar. Driven by `layoutService.setPartHidden` + a `isPanelMaximized()`-guarded `toggleMaximizedPanel` + `setSize` (all deterministic — no blind toggles).
+- **Per-mode RAM right-sizing** (WARP_RAM / CURSOR_RAM / TERAX_RAM / CATE_RAM / LITE_RAM): each mode trims only what it doesn't use and keeps its hero settings. Warp trims editor/TS-server weight but keeps terminal shell-integration + GPU (its blocks need them); Cursor trims ALL terminal weight (GPU off, shell-integration off, no persistent ptys) but keeps the editor index + AI; Terax aggressive (hover/validate stay on so it never reads as broken); Cate balanced + idle-pty trims; Lite the hardest, stacked on the existing optimizer block. Source: "Cursor is not going to take more RAM than it needs."
+
+### Fixed / Changed
+- **The reload-vanish + customization-clobber pair** (both caught by a pre-build skeptic pass): part visibility is per-*workspace* runtime state, not a profile setting, so the layout is re-asserted on the reload-proof path (constructor + profile-change) — but guarded by a per-workspace `ursula.mode.shapedFor` marker so it applies only on a real mode *change*. Result: the restructure survives a folder-open reload AND a layout tweak you make inside a mode persists (it doesn't get slammed back on the next relayout).
+- **Replaced `runStartupCommands`** (blind `focusPanel`/`toggleMaximizedPanel`/`focusSideBar` — stateful, could un-maximize on a repeat entry) with deterministic `applyModeLayout` + an extension-gated `runModeExtras` (rail focus / openChatToSide behind `whenInstalledExtensionsRegistered`).
+- **Settings reconciled:** Cate's activity bar flipped `default` → `hidden` (the Sessions rail moved to the aux bar); Cursor gained `activityBar.location: hidden` + explicit `statusBar.visible` (it's a standalone template, not BASE_LEAN).
+
+### Why
+Drey: "It's supposed to have the design of each of these… make the whole UI different, not just the colors," and each mode must use only the RAM it needs. The earlier CSS pass recolored a VS Code window, which still read as VS Code. This restructures the parts per mode and right-sizes RAM per mode. Compiles 0 errors, structurally verified in `out/`, boots clean. Public push still HELD pending Drey's GUI confirm.
+
+### Also (same day, "continue all the way through")
+- **Sessions rail moved to the LEFT** (`ursula-ram-guard` viewsContainers `auxiliarybar` → `activitybar`) to match the approved mockup, and `MODE_LAYOUT[Cate]` updated to show the left rail + right AI chat. This also frees the right aux bar for Cursor's composer (a collision the skeptic had flagged) and silenced the `ursulaSessionsContainer does not exist` boot warning.
+- **Layout timing hardened:** the constructor's `applyModeLayout` now defers to `layoutService.whenRestored` so the workbench's own layout restore can't race/overwrite the per-mode `setPartHidden` on a cold boot into a mode.
+- **Decision:** the bespoke Warp command bar + Cate session-tabs widgets were intentionally *not* built — they'd duplicate the real maximized-terminal prompt and the left rail's session list respectively. The restructure + skins + rail carry the looks. Re-entry layout persistence remains a v2 (within-a-mode-session customization already persists).
+
+## [2026-06-20] — Reskin: per-mode skin CSS that genuinely re-skins the window (all 5 modes, source-verified)
+
+### Added
+- **`MODE_CSS` filled for all 5 modes** (`ursulaModes/browser/templates.ts`): per-mode scoped stylesheet bodies the contribution swaps into one persistent `<style class="ursula-mode-css">` when the mode changes (Mechanism A, the theme-engine pattern). Cate = warm near-black + ember-orange `#e0683c` session rail (activity bar / side bar / tree selection / tab underline); Terax = flat near-black monochrome, one gold hairline; Cursor = desaturated charcoal with the right-hand auxiliary (AI) bar as the hero; Lite = featherweight flat recolor only (no gradients/shadows/animation — perf is the point).
+
+### Fixed
+- **Warp's exit-code dots never rendered** — the old `WARP_CSS` styled `.successful-command` / `.error-command` / `.codicon-circle-filled` / `.codicon-error`, **none of which exist** in VS Code. Terminal command decorations are codicon glyphs colored via `color:`, keyed `.terminal-command-decoration` (success), `.error` (fail), `.default` (running) under a `.terminal` ancestor (decorationStyles.ts / terminal.css). Rewrote to recolor the real glyphs.
+- **Warp's gold active-tab targeted a non-existent class** — `.panel-switcher-container` doesn't exist; the real chain is `.part.panel > .title > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.checked` (panelpart.css:60), and the underline is a separate `.active-item-indicator` element, not a label border. Also corrected the terminal surface to `.pane-body.integrated-terminal`.
+
+### Why
+Drey rejected the VS-Code-Profiles look ("make it genuinely look like Warp/Cate/Terax"). The reskin mechanism was right but its selectors were the build agent's *guesses* at the live DOM — unverifiable without a GUI tap-test. Source-grounding every selector against `src/vs` (a stronger check than eyeballing) fixed Warp's real bugs and let all 4 other modes be authored at once, so one tap-test covers all five. Compiles 0 errors; verified structurally in `out/`. Public push still HELD pending Drey's visual confirm.
+
 ## [2026-06-20] — Modes system (Terax/Warp/Cursor/Cate/Lite) + movable Sessions rail + RAM Guard v2
 
 ### Added

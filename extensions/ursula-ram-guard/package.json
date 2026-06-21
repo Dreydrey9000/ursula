@@ -45,6 +45,12 @@
         "category": "Ursula"
       },
       {
+        "command": "ursula.sessions.focus",
+        "title": "Focus Sessions Rail",
+        "category": "Ursula",
+        "icon": "$(flame)"
+      },
+      {
         "command": "ursula.sessions.resume",
         "title": "Resume Session",
         "category": "Ursula",

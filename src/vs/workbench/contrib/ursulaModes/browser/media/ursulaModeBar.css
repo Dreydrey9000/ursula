@@ -1,0 +1,252 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/*
+ * Ursula Modes — the bottom switcher (Mechanism C).
+ *
+ * Two overlay DOM elements appended to `.monaco-workbench` (the layoutService.mainContainer),
+ * NOT grid parts. Positioning mirrors NotificationsToasts: absolute, above the status bar,
+ * with a translate3d slide for the sheet. `bottom`/z-index numbers are set inline by the
+ * contribution (they depend on the live status-bar height); this file owns the LOOK and the
+ * slide transition only.
+ *
+ * Z-order budget (from notificationsToasts.css): modal backdrop 2540, quick input 2550,
+ * dialogs 2575. The BAR sits at ~2400 (below quick input so the Cmd+K M QuickPick opens on
+ * top), the SHEET at ~2545 (above the backdrop, below quick input).
+ */
+
+/* ---------------------------------------------------------------------------------------------
+ * The persistent bottom bar — reads like a Warp command bar.
+ * ------------------------------------------------------------------------------------------- */
+
+.monaco-workbench > .ursula-mode-bar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 30px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 0 12px;
+	box-sizing: border-box;
+	cursor: pointer;
+	user-select: none;
+	font-size: 12px;
+	color: #cbbfa6;
+	background: linear-gradient(180deg, #1d1a14 0%, #15120e 100%);
+	border-top: 2px solid #C2A878;
+	box-shadow: inset 0 1px 0 0 rgba(194, 168, 120, 0.18);
+	/* `bottom` + `z-index` are set inline by the contribution (status-bar height aware). */
+}
+
+.monaco-workbench > .ursula-mode-bar:hover {
+	color: #e7dcc6;
+}
+
+.monaco-workbench > .ursula-mode-bar .ursula-mode-bar-glyph {
+	color: #C2A878;
+	font-weight: 600;
+}
+
+.monaco-workbench > .ursula-mode-bar .ursula-mode-bar-label {
+	color: #7cafc2;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+}
+
+.monaco-workbench > .ursula-mode-bar .ursula-mode-bar-hint {
+	margin-left: auto;
+	color: #6f6655;
+	font-size: 11px;
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * The slide-up sheet — the launcher listing the 5 rooms.
+ * ------------------------------------------------------------------------------------------- */
+
+.monaco-workbench > .ursula-mode-sheet {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	/* `z-index` is set inline by the contribution (~2545). */
+	background: #14110d;
+	border-top: 2px solid #C2A878;
+	box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.55);
+	padding: 14px 12px 18px;
+	box-sizing: border-box;
+	transform: translate3d(0, 100%, 0); /* hidden: parked below the viewport */
+	transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	will-change: transform;
+}
+
+.monaco-workbench > .ursula-mode-sheet.visible {
+	transform: translate3d(0, 0, 0); /* slide up into view */
+}
+
+/* Honor reduced motion the same way the toasts do. */
+.monaco-workbench.monaco-reduce-motion > .ursula-mode-sheet {
+	transition: transform 0ms;
+}
+
+.monaco-workbench > .ursula-mode-sheet .ursula-mode-sheet-title {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	color: #6f6655;
+	margin: 0 4px 10px;
+}
+
+.monaco-workbench > .ursula-mode-sheet .ursula-mode-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	cursor: pointer;
+	color: #d8cdb8;
+}
+
+.monaco-workbench > .ursula-mode-sheet .ursula-mode-row:hover,
+.monaco-workbench > .ursula-mode-sheet .ursula-mode-row.focused {
+	background: rgba(194, 168, 120, 0.12);
+	color: #f1e7d2;
+}
+
+.monaco-workbench > .ursula-mode-sheet .ursula-mode-row .ursula-mode-key {
+	flex: 0 0 auto;
+	width: 22px;
+	height: 22px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	font-weight: 700;
+	color: #14110d;
+	background: #C2A878;
+	border-radius: 5px;
+}
+
+.monaco-workbench > .ursula-mode-sheet .ursula-mode-row .ursula-mode-name {
+	font-size: 14px;
+	font-weight: 600;
+	color: inherit;
+}
+
+.monaco-workbench > .ursula-mode-sheet .ursula-mode-row .ursula-mode-feel {
+	margin-left: auto;
+	font-size: 12px;
+	color: #8a8071;
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * Warp command bar (Warp mode only) — a rounded command input that runs in the terminal.
+ * The contribution sets `bottom` + `z-index` inline (above the mode bar); this owns the look.
+ * ------------------------------------------------------------------------------------------- */
+.monaco-workbench > .ursula-warp-cmdbar {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	width: min(760px, calc(100% - 40px));
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 42px;
+	padding: 0 8px 0 15px;
+	box-sizing: border-box;
+	background: linear-gradient(180deg, #23201a 0%, #1a1712 100%);
+	border: 1px solid #4a4131;
+	border-radius: 12px;
+	box-shadow: 0 0 0 1px rgba(194, 168, 120, 0.12), 0 14px 36px -10px rgba(0, 0, 0, 0.7);
+}
+.monaco-workbench > .ursula-warp-cmdbar .ursula-warp-prompt {
+	color: #C2A878;
+	font-size: 14px;
+	flex: 0 0 auto;
+}
+.monaco-workbench > .ursula-warp-cmdbar .ursula-warp-input {
+	flex: 1;
+	background: transparent;
+	border: none;
+	outline: none;
+	color: #efe7d6;
+	font-family: var(--monaco-monospace-font, ui-monospace, monospace);
+	font-size: 13px;
+	letter-spacing: 0.01em;
+}
+.monaco-workbench > .ursula-warp-cmdbar .ursula-warp-input::placeholder {
+	color: #7d745f;
+}
+.monaco-workbench > .ursula-warp-cmdbar .ursula-warp-ai {
+	flex: 0 0 auto;
+	font-size: 10.5px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: #C2A878;
+	border: 1px solid #4a4131;
+	border-radius: 7px;
+	padding: 4px 9px;
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * Cate session-tab strip (Cate mode only) — one tab per live Claude session, ember accents.
+ * The contribution sets `top` + `z-index` inline (below the title bar); this owns the look.
+ * ------------------------------------------------------------------------------------------- */
+.monaco-workbench > .ursula-cate-tabs {
+	position: absolute;
+	left: 0;
+	right: 0;
+	display: flex;
+	align-items: stretch;
+	gap: 3px;
+	height: 34px;
+	padding: 4px 10px 0;
+	box-sizing: border-box;
+	background: linear-gradient(180deg, #221d18 0%, #1a1714 100%);
+	border-bottom: 1px solid #2c2620;
+	overflow-x: auto;
+}
+.monaco-workbench > .ursula-cate-tabs .ursula-cate-tab {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	padding: 0 13px;
+	border-radius: 8px 8px 0 0;
+	cursor: pointer;
+	color: #9b9186;
+	font-size: 12px;
+	white-space: nowrap;
+}
+.monaco-workbench > .ursula-cate-tabs .ursula-cate-tab:hover {
+	background: rgba(224, 104, 60, 0.10);
+	color: #e7ddd0;
+}
+.monaco-workbench > .ursula-cate-tabs .ursula-cate-tab.on {
+	background: #141110;
+	color: #f0e9e1;
+	box-shadow: inset 0 2px 0 0 #e0683c;
+}
+.monaco-workbench > .ursula-cate-tabs .ursula-cate-tab.empty {
+	color: #6b6258;
+	cursor: default;
+	font-style: italic;
+}
+.monaco-workbench > .ursula-cate-tabs .ursula-cate-tab-fl {
+	color: #e0683c;
+	font-size: 12px;
+}
+.monaco-workbench > .ursula-cate-tabs .ursula-cate-tab-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	flex: 0 0 auto;
+}
+.monaco-workbench > .ursula-cate-tabs .ursula-cate-tab-dot.run {
+	background: #8fa86a;
+	box-shadow: 0 0 6px #8fa86a;
+}
+.monaco-workbench > .ursula-cate-tabs .ursula-cate-tab-dot.idle {
+	background: #6b6258;
+}

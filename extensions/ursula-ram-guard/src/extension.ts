@@ -47,6 +47,7 @@ interface GpuInfo {
 
 let gpuInfo: GpuInfo | undefined;          // cached once at activation; system_profiler is slow (~1-2s), never poll it
 let lastSessions: ClaudeSession[] = [];    // snapshot from the last tick — used for kill re-validation + the rail
+let lastRam: RamInfo | undefined;          // last REAL RAM reading — so panel repaints never flash 0%
 let lastRamTotalGb = 0;                     // RAM signal for the hardware recommendation
 let panel: vscode.WebviewPanel | undefined; // the Bone+Gold dashboard (reveal-don't-stack)
 let hasAutoOptimizedThisSession = false;    // optimizer "auto" guard — apply Lite at most once per session
@@ -92,14 +93,33 @@ export function activate(context: vscode.ExtensionContext): void {
 			optimizerMode: optimizerMode(),
 			gpuAccel: getDetectedGpuAccel(),
 		})),
+		// Session list for the Cate top session-tabs strip (the contribution renders it; this is the data).
+		vscode.commands.registerCommand('ursula.ramGuard.getSessions', () => lastSessions.map(s => ({
+			pid: s.pid,
+			sessionId: s.sessionId,
+			cwd: s.cwd,
+			status: s.status,
+			rssMb: s.rssMb,
+		}))),
+		// Resume a specific session by pid — a Cate session tab click resumes THAT session in a terminal.
+		vscode.commands.registerCommand('ursula.sessions.resumeByPid', (pid?: number): void => {
+			const s = lastSessions.find(x => x.pid === pid);
+			if (s && s.cwd) { resumeInTerminal(s.cwd, s.sessionId); }
+		}),
 		// Focus the Sessions rail (alias to the view's auto-generated focus command) — Cate mode startup uses this.
 		vscode.commands.registerCommand('ursula.sessions.focus', (): void => { void vscode.commands.executeCommand('ursulaSessions.focus'); }),
 		// Row actions for the Sessions rail (clicking the item reveals; buttons invoke these).
 		vscode.commands.registerCommand('ursula.sessions.resume', (item?: SessionNode): void => {
-			if (item?.session) { resumeInTerminal(item.session.cwd, item.session.sessionId); }
+			// Live row OR an interrupted (crashed-mid-turn) row — crash-recovery is the rail's whole point,
+			// and interrupted nodes carry `interrupted`, not `session`.
+			const s = item?.session, i = item?.interrupted;
+			if (s) { resumeInTerminal(s.cwd, s.sessionId); }
+			else if (i) { resumeInTerminal(i.cwd, i.sessionId); }
 		}),
 		vscode.commands.registerCommand('ursula.sessions.reveal', (item?: SessionNode): void => {
-			if (item?.session) { revealTranscript(item.session); }
+			const s = item?.session, i = item?.interrupted;
+			if (s) { revealTranscript(s); }
+			else if (i) { revealTranscript({ pid: i.pid, rssMb: 0, age: '', command: '', cwd: i.cwd, sessionId: i.sessionId }); }
 		}),
 		vscode.commands.registerCommand('ursula.sessions.free', (item?: SessionNode): void => {
 			if (item?.session) { killSessionRevalidated(item.session.pid, item.session.cwd); }
@@ -250,6 +270,7 @@ async function updateStatusBar(status: vscode.StatusBarItem): Promise<void> {
 
 	// --- RAM Guard v2: feed the shared state off the ONE existing timer (no second scan) ---
 	lastSessions = sessions;            // snapshot for kill re-validation + the rail
+	lastRam = r;                        // cache the real reading so a panel repaint never flashes 0%
 	lastRamTotalGb = r.totalGb;         // feed the hardware recommendation
 	sessionsTreeEmitter.fire();         // refresh the Ursula Sessions rail
 	if (panel) { pushToPanel(r, sessions); }
@@ -320,6 +341,11 @@ function listClaudeSessions(): Promise<ClaudeSession[]> {
 				if (/grep|ram-guard|ps -eo/i.test(cmd)) { continue; }
 				const pid = Number(pidStr);
 				const meta = readSessionMeta(pid);
+				// REAL Claude Code sessions are keyed by ~/.claude/sessions/<pid>.json. Without that
+				// metadata the row is just a process that happens to have ".claude" in its path
+				// (lean-ctx, hooks, shell scripts, bare shells) — drop it. Otherwise the rail floods
+				// with unactionable "(unknown dir)" rows whose Free/Resume/Reveal do nothing.
+				if (!meta.sessionId && !meta.cwd) { continue; }
 				sessions.push({
 					pid,
 					rssMb: Number(rssStr) / 1024,
@@ -461,9 +487,12 @@ async function openDashboardPanel(context: vscode.ExtensionContext): Promise<voi
 				revealTranscript(s ?? { pid: msg.pid ?? 0, rssMb: 0, age: '', command: '', cwd: msg.cwd, sessionId: msg.sessionId });
 				break;
 			}
-			case 'optimize':
-				void vscode.commands.executeCommand('ursula.mode.lite'); // "Optimize now" → apply Lite (CONTRACT with A)
+			case 'optimize': {
+				// Apply the RECOMMENDED mode — Terax on a capable Mac, Lite on a weak one — not always Lite.
+				const rec = getRecommendedMode();
+				void vscode.commands.executeCommand(rec === 'terax' ? 'ursula.mode.terax' : 'ursula.mode.lite');
 				break;
+			}
 		}
 	});
 	panel.webview.html = renderHtml();
@@ -474,7 +503,10 @@ async function openDashboardPanel(context: vscode.ExtensionContext): Promise<voi
 function pushToPanel(r?: RamInfo, sessions?: ClaudeSession[]): void {
 	if (!panel) { return; }
 	const useSessions = sessions ?? lastSessions;
-	const ram = r ?? (lastRamTotalGb
+	// Prefer the live reading, then the last REAL cached reading; only synthesize zeros if the panel
+	// is opened before the very first tick. Avoids the gauge flashing 0% on every Reveal/Resume/toggle
+	// that calls pushToPanel() with no fresh reading.
+	const ram = r ?? lastRam ?? (lastRamTotalGb
 		? { usedPct: 0, freeMb: 0, totalGb: lastRamTotalGb, usedGb: 0, compressorMb: 0 }
 		: undefined);
 	panel.webview.postMessage({
@@ -603,11 +635,13 @@ function renderHtml(): string {
       const vEl = document.getElementById('hwVerdict');
       vEl.innerHTML = rec ? ('Recommended for your Mac: ' + esc(rec[0].toUpperCase()+rec.slice(1)) + '<span class="badge">Recommended</span>') : '';
       const ow = document.getElementById('optimizeWrap');
-      if (rec === 'lite') {
+      if (rec) {
         ow.style.display = '';
+        const recName = rec[0].toUpperCase() + rec.slice(1);
+        document.getElementById('optimizeBtn').textContent = 'Switch to ' + recName;
         document.getElementById('optimizeSub').textContent = opt === 'auto'
-          ? 'Lite auto-applied — tuned to this Mac. Switch back anytime.'
-          : 'Applies Lite mode — tuned to this Mac. One click, reversible (switch back anytime).';
+          ? (recName + ' auto-applied — tuned to this Mac. Switch back anytime.')
+          : ('Applies ' + recName + ' mode — tuned to this Mac. One click, reversible (switch back anytime).');
       } else { ow.style.display = 'none'; }
     }
 
@@ -737,13 +771,16 @@ function revealTranscript(s: ClaudeSession): void {
 	const base = path.join(os.homedir(), '.claude', 'projects');
 	if (s.sessionId) {
 		const found = findTranscript(base, s.sessionId);
-		if (found) { void vscode.env.openExternal(vscode.Uri.file(found)); return; }
+		// Open the transcript IN THE EDITOR. openExternal on a .jsonl fails ("No application found to
+		// open URLs") — macOS has no registered app for the file.
+		if (found) { void vscode.window.showTextDocument(vscode.Uri.file(found)); return; }
 	}
 	if (s.cwd) {
 		const folder = path.join(base, s.cwd.replace(/\//g, '-'));
-		if (fs.existsSync(folder)) { void vscode.env.openExternal(vscode.Uri.file(folder)); return; }
+		// Reveal the project folder in Finder (revealFileInOS), not openExternal.
+		if (fs.existsSync(folder)) { void vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(folder)); return; }
 	}
-	void vscode.env.openExternal(vscode.Uri.file(base));
+	void vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(base));
 }
 
 function findTranscript(base: string, sessionId: string): string | undefined {
